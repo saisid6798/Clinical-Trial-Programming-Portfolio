@@ -1,0 +1,1484 @@
+NOTE: PROCEDURE PRINTTO used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              372.03k
+      OS Memory           26528.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        718  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     16
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+87         
+88         
+89         proc import
+90             datafile="&INPATH./ADRS.xls"
+91             out=work.adrs_raw
+92             dbms=xls
+93             replace;
+94             getnames=yes;
+95         run;
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with 
+      options MSGLEVEL=I.
+NOTE: The import data set has 100 observations and 17 variables.
+NOTE: WORK.ADRS_RAW data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              1580.21k
+      OS Memory           27576.00k
+                                                           The SAS System
+
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        719  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     274
+      Page Swaps                        0
+      Voluntary Context Switches        26
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+96         
+97         
+98         proc contents data=work.adrs_raw varnum;
+99         run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.00 seconds
+      memory              1531.56k
+      OS Memory           27048.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        720  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           24
+      
+
+100        
+101        
+102        
+103        data adrs_itt;
+104            set work.adrs_raw;
+105        
+106            where upcase(strip(ittfl))="Y"
+107              and upcase(strip(paramcd))="BOR";
+108        
+109            length age_category $10
+110                   treatment    $20
+111                   response     $8
+112                   reason_clean $100;
+113        
+114            if compress(strip(agegr1)," ")="<65" then do;
+115                agecatn=1;
+116                age_category="< 65";
+117            end;
+118        
+119            else if compress(strip(agegr1)," ")=">=65" then do;
+120                agecatn=2;
+121                age_category=">= 65";
+122            end;
+123        
+124            else delete;
+                                                           The SAS System
+
+125        
+126        
+127            if upcase(compress(strip(trt01a),"- "))="CMP123" then do;
+128                trtn=1;
+129                treatment="Trt A";
+130            end;
+131        
+132            else if upcase(strip(trt01a))="PLACEBO" then do;
+133                trtn=2;
+134                treatment="Trt B";
+135            end;
+136        
+137            else delete;
+138        
+139        
+140            response=upcase(strip(avalc));
+141        
+142            if response="NE" then response="UID";
+143        
+144        
+145            reason_clean=upcase(strip(nereasn));
+146        
+147            if response="UID" and missing(reason_clean) then
+148                reason_clean="REASON NOT AVAILABLE";
+149        
+150        
+151            if response in ("CR","PR") then orr=1;
+152            else orr=0;
+153        run;
+
+NOTE: There were 100 observations read from the data set WORK.ADRS_RAW.
+      WHERE (UPCASE(STRIP(ittfl))='Y') and (UPCASE(STRIP(paramcd))='BOR');
+NOTE: The data set WORK.ADRS_ITT has 100 observations and 24 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              921.56k
+      OS Memory           27048.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        721  Switch Count  3
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+154        
+155        
+156        proc sort data=adrs_itt nodupkey;
+157            by usubjid;
+158        run;
+
+NOTE: There were 100 observations read from the data set WORK.ADRS_ITT.
+NOTE: 0 observations with duplicate key values were deleted.
+                                                           The SAS System
+
+NOTE: The data set WORK.ADRS_ITT has 100 observations and 24 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              791.03k
+      OS Memory           27048.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        722  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     103
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+159        
+160        
+161        proc freq data=adrs_itt;
+162            tables agecatn*trtn*response / missing;
+163            tables response*reason_clean / missing;
+164            title "Diagnostic: ADRS Response Categories";
+165        run;
+
+NOTE: There were 100 observations read from the data set WORK.ADRS_ITT.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.07 seconds
+      system cpu time     0.00 seconds
+      memory              1586.75k
+      OS Memory           27308.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        723  Switch Count  5
+      Page Faults                       0
+      Page Reclaims                     191
+      Page Swaps                        0
+      Voluntary Context Switches        30
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           560
+      
+
+166        
+167        title;
+168        
+169        
+170        data adrs_all;
+171            set adrs_itt;
+172        
+173            output;
+174        
+175            trtn=3;
+176            treatment="Total";
+177            output;
+178        run;
+
+                                                           The SAS System
+
+NOTE: There were 100 observations read from the data set WORK.ADRS_ITT.
+NOTE: The data set WORK.ADRS_ALL has 200 observations and 24 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              832.78k
+      OS Memory           27048.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        724  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     101
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+179        
+180        
+181        proc sql;
+182            create table denominators as
+183        
+184            select agecatn,
+185                   trtn,
+186                   count(distinct usubjid) as denom
+187        
+188            from adrs_all
+189        
+190            group by agecatn,
+191                     trtn
+192        
+193            order by agecatn,
+194                     trtn;
+NOTE: Table WORK.DENOMINATORS created, with 6 rows and 3 columns.
+
+195        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              5491.46k
+      OS Memory           31912.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        725  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     153
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+196        
+197        
+198        proc sql noprint;
+                                                           The SAS System
+
+199        
+200            select denom into :n_lt65_a trimmed
+201            from denominators
+202            where agecatn=1 and trtn=1;
+203        
+204            select denom into :n_lt65_b trimmed
+205            from denominators
+206            where agecatn=1 and trtn=2;
+207        
+208            select denom into :n_lt65_t trimmed
+209            from denominators
+210            where agecatn=1 and trtn=3;
+211        
+212        
+213            select denom into :n_ge65_a trimmed
+214            from denominators
+215            where agecatn=2 and trtn=1;
+216        
+217            select denom into :n_ge65_b trimmed
+218            from denominators
+219            where agecatn=2 and trtn=2;
+220        
+221            select denom into :n_ge65_t trimmed
+222            from denominators
+223            where agecatn=2 and trtn=3;
+224        
+225        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              5603.00k
+      OS Memory           31912.00k
+      Timestamp           07/17/2026 11:26:20 PM
+      Step Count                        726  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     230
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+226        
+227        
+228        %put NOTE: AGE <65: Trt A=&n_lt65_a Trt B=&n_lt65_b Total=&n_lt65_t;
+NOTE: AGE <65: Trt A=35 Trt B=35 Total=70
+229        %put NOTE: AGE >=65: Trt A=&n_ge65_a Trt B=&n_ge65_b Total=&n_ge65_t;
+NOTE: AGE >=65: Trt A=15 Trt B=15 Total=30
+230        
+231        
+232        proc sql;
+233            create table response_counts as
+234        
+235            select agecatn,
+236                   trtn,
+237                   response,
+                                                           The SAS System
+
+238                   count(distinct usubjid) as count
+239        
+240            from adrs_all
+241        
+242            group by agecatn,
+243                     trtn,
+244                     response;
+NOTE: Table WORK.RESPONSE_COUNTS created, with 30 rows and 4 columns.
+
+245        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5505.03k
+      OS Memory           31912.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        727  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     150
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           288
+      
+
+246        
+247        
+248        
+249        data response_frame;
+250            set denominators;
+251        
+252            length response $8
+253                   display_label $100;
+254        
+255            row_order=0;
+256            response="";
+257            display_label="BEST OVERALL RESPONSE";
+258            output;
+259        
+260            row_order=1;
+261            response="CR";
+262            display_label="COMPLETE RESPONSE (CR)";
+263            output;
+264        
+265            row_order=2;
+266            response="PR";
+267            display_label="PARTIAL RESPONSE (PR)";
+268            output;
+269        
+270            row_order=3;
+271            response="SD";
+272            display_label="STABLE DISEASE (SD)";
+273            output;
+274        
+275            row_order=4;
+276            response="PD";
+                                                           The SAS System
+
+277            display_label="PROGRESSIVE DISEASE (PD)";
+278            output;
+279        
+280            row_order=5;
+281            response="UID";
+282            display_label="UNABLE TO DETERMINE (UID)";
+283            output;
+284        run;
+
+NOTE: There were 6 observations read from the data set WORK.DENOMINATORS.
+NOTE: The data set WORK.RESPONSE_FRAME has 36 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              816.71k
+      OS Memory           27048.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        728  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+285        
+286        
+287        proc sql;
+288            create table response_complete as
+289        
+290            select f.agecatn,
+291                   f.trtn,
+292                   f.denom,
+293                   f.row_order,
+294                   f.response,
+295                   f.display_label,
+296                   coalesce(c.count,0) as count
+297        
+298            from response_frame as f
+299        
+300            left join response_counts as c
+301        
+302              on  f.agecatn=c.agecatn
+303              and f.trtn=c.trtn
+304              and f.response=c.response
+305        
+306            order by f.agecatn,
+307                     f.row_order,
+308                     f.trtn;
+NOTE: Table WORK.RESPONSE_COMPLETE created, with 36 rows and 7 columns.
+
+309        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+                                                           The SAS System
+
+      system cpu time     0.00 seconds
+      memory              9431.92k
+      OS Memory           34236.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        729  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     302
+      Page Swaps                        0
+      Voluntary Context Switches        23
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+310        
+311        
+312        data response_rows;
+313            set response_complete;
+314        
+315            length value $50;
+316        
+317            if row_order=0 then
+318                value="";
+319        
+320            else
+321                value=cats(
+322                    strip(put(count,3.)),
+323                    " (",
+324                    strip(put(100*count/denom,5.1)),
+325                    "%)"
+326                );
+327        
+328            keep agecatn
+329                 trtn
+330                 row_order
+331                 display_label
+332                 value;
+333        run;
+
+NOTE: There were 36 observations read from the data set WORK.RESPONSE_COMPLETE.
+NOTE: The data set WORK.RESPONSE_ROWS has 36 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              803.93k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        730  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+                                                           The SAS System
+
+334        
+335        
+336        data reason_shell;
+337            length reason_clean $100
+338                   display_label $100;
+339        
+340            reason_number=1;
+341            reason_clean="DEATH BEFORE MEASUREMENT";
+342            display_label="      DEATH BEFORE MEASUREMENT";
+343            output;
+344        
+345            reason_number=2;
+346            reason_clean="WITHDROWN CONSENT";
+347            display_label="      WITHDROWN CONSENT";
+348            output;
+349        
+350            reason_number=3;
+351            reason_clean="DROPED STUDY";
+352            display_label="      DROPED STUDY";
+353            output;
+354        run;
+
+NOTE: The data set WORK.REASON_SHELL has 3 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              527.71k
+      OS Memory           27300.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        731  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+355        
+356        
+357        proc sql;
+358            create table reason_counts as
+359        
+360            select agecatn,
+361                   trtn,
+362                   reason_clean,
+363                   count(distinct usubjid) as count
+364        
+365            from adrs_all
+366        
+367            where response="UID"
+368        
+369            group by agecatn,
+370                     trtn,
+371                     reason_clean;
+NOTE: Table WORK.REASON_COUNTS created, with 14 rows and 4 columns.
+                                                           The SAS System
+
+
+372        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5493.25k
+      OS Memory           32424.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        732  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     160
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+373        
+374        
+375        proc sql;
+376            create table reason_frame as
+377        
+378            select d.agecatn,
+379                   d.trtn,
+380                   d.denom,
+381                   r.reason_number,
+382                   r.reason_clean,
+383                   r.display_label
+384        
+385            from denominators as d
+386                 cross join reason_shell as r
+387        
+388            order by d.agecatn,
+389                     r.reason_number,
+390                     d.trtn;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.REASON_FRAME created, with 18 rows and 6 columns.
+
+391        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              11431.39k
+      OS Memory           36536.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        733  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     305
+      Page Swaps                        0
+      Voluntary Context Switches        26
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+                                                           The SAS System
+
+392        
+393        
+394        proc sql;
+395            create table reason_complete as
+396        
+397            select f.agecatn,
+398                   f.trtn,
+399                   f.denom,
+400                   f.reason_number,
+401                   f.reason_clean,
+402                   f.display_label,
+403                   coalesce(c.count,0) as count
+404        
+405            from reason_frame as f
+406        
+407            left join reason_counts as c
+408        
+409              on  f.agecatn=c.agecatn
+410              and f.trtn=c.trtn
+411              and f.reason_clean=c.reason_clean
+412        
+413            order by f.agecatn,
+414                     f.reason_number,
+415                     f.trtn;
+NOTE: Table WORK.REASON_COMPLETE created, with 18 rows and 7 columns.
+
+416        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              12256.32k
+      OS Memory           37052.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        734  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     308
+      Page Swaps                        0
+      Voluntary Context Switches        23
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+417        
+418        
+419        data reason_rows;
+420            set reason_complete;
+421        
+422            length value $50;
+423        
+424            row_order=5+(reason_number/100);
+425        
+426            value=cats(
+427                strip(put(count,3.)),
+428                " (",
+429                strip(put(100*count/denom,5.1)),
+430                "%)"
+                                                           The SAS System
+
+431            );
+432        
+433            keep agecatn
+434                 trtn
+435                 row_order
+436                 display_label
+437                 value;
+438        run;
+
+NOTE: There were 18 observations read from the data set WORK.REASON_COMPLETE.
+NOTE: The data set WORK.REASON_ROWS has 18 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              819.56k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        735  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+439        
+440        
+441        proc sql;
+442            create table orr_summary as
+443        
+444            select agecatn,
+445                   trtn,
+446                   count(distinct usubjid) as denom,
+447        
+448                   count(
+449                       distinct case
+450                           when response in ("CR","PR")
+451                           then usubjid
+452                       end
+453                   ) as numerator
+454        
+455            from adrs_all
+456        
+457            group by agecatn,
+458                     trtn
+459        
+460            order by agecatn,
+461                     trtn;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.ORR_SUMMARY created, with 6 rows and 4 columns.
+
+462        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+                                                           The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5680.82k
+      OS Memory           32424.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        736  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     224
+      Page Swaps                        0
+      Voluntary Context Switches        22
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+463        
+464        
+465        data orr_input;
+466            set adrs_all;
+467        
+468            if response in ("CR","PR") then orr_flag=1;
+469            else orr_flag=0;
+470        run;
+
+NOTE: There were 200 observations read from the data set WORK.ADRS_ALL.
+NOTE: The data set WORK.ORR_INPUT has 200 observations and 25 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              833.78k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        737  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     100
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+471        
+472        proc sort data=orr_input;
+473            by agecatn trtn;
+474        run;
+
+NOTE: There were 200 observations read from the data set WORK.ORR_INPUT.
+NOTE: The data set WORK.ORR_INPUT has 200 observations and 25 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              791.53k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        738  Switch Count  2
+                                                           The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     92
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+475        
+476        
+477        ods exclude all;
+478        
+479        proc freq data=orr_input;
+480            by agecatn trtn;
+481        
+482            tables orr_flag /
+483                binomial(
+484                    p=0.5
+485                    level="1"
+486                );
+487        
+488            exact binomial;
+489        run;
+
+NOTE: There were 200 observations read from the data set WORK.ORR_INPUT.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              949.46k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        739  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     119
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+490        
+491        ods exclude none;
+492        
+493        
+494        
+495        data orr_final;
+496            set orr_summary;
+497        
+498            alpha=0.05;
+499        
+500            if numerator=0 then
+501                lower_prop=0;
+502            else
+503                lower_prop=quantile(
+504                    "BETA",
+                                                           The SAS System
+
+505                    alpha/2,
+506                    numerator,
+507                    denom-numerator+1
+508                );
+509        
+510        
+511            if numerator=denom then
+512                upper_prop=1;
+513            else
+514                upper_prop=quantile(
+515                    "BETA",
+516                    1-alpha/2,
+517                    numerator+1,
+518                    denom-numerator
+519                );
+520        
+521        
+522            lower_pct=100*lower_prop;
+523            upper_pct=100*upper_prop;
+524        run;
+
+NOTE: There were 6 observations read from the data set WORK.ORR_SUMMARY.
+NOTE: The data set WORK.ORR_FINAL has 6 observations and 9 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              811.75k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        740  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+525        
+526        
+527        data orr_rows;
+528            set orr_final;
+529        
+530            length display_label $100
+531                   value $50;
+532        
+533        
+534            row_order=7;
+535            display_label="OBJECTIVE RESPONSE RATE (1)";
+536        
+537            value=cats(
+538                strip(put(numerator,3.)),
+539                "/",
+540                strip(put(denom,3.)),
+541                " (",
+542                strip(put(100*numerator/denom,5.1)),
+                                                           The SAS System
+
+543                "%)"
+544            );
+545        
+546            output;
+547        
+548        
+549            row_order=8;
+550            display_label="   (95% CI)";
+551        
+552            value=cats(
+553                "(",
+554                strip(put(lower_pct,5.1)),
+555                ", ",
+556                strip(put(upper_pct,5.1)),
+557                ")"
+558            );
+559        
+560            output;
+561        
+562            keep agecatn
+563                 trtn
+564                 row_order
+565                 display_label
+566                 value;
+567        run;
+
+NOTE: There were 6 observations read from the data set WORK.ORR_FINAL.
+NOTE: The data set WORK.ORR_ROWS has 12 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              835.46k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        741  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+568        
+569        
+570        data table_long;
+571            set response_rows
+572                reason_rows
+573                orr_rows;
+574        run;
+
+NOTE: There were 36 observations read from the data set WORK.RESPONSE_ROWS.
+NOTE: There were 18 observations read from the data set WORK.REASON_ROWS.
+NOTE: There were 12 observations read from the data set WORK.ORR_ROWS.
+NOTE: The data set WORK.TABLE_LONG has 66 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1418.37k
+      OS Memory           28080.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        742  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     187
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+575        
+576        proc sort data=table_long;
+577            by agecatn
+578               row_order
+579               display_label
+580               trtn;
+581        run;
+
+NOTE: There were 66 observations read from the data set WORK.TABLE_LONG.
+NOTE: The data set WORK.TABLE_LONG has 66 observations and 5 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              775.12k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        743  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+582        
+583        
+584        proc print data=table_long noobs;
+585            var agecatn
+586                trtn
+587                row_order
+588                display_label
+589                value;
+590        
+591            title "Diagnostic: All Table 13 Rows Before Transpose";
+592        run;
+
+NOTE: There were 66 observations read from the data set WORK.TABLE_LONG.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.04 seconds
+                                                           The SAS System
+
+      user cpu time       0.04 seconds
+      system cpu time     0.00 seconds
+      memory              673.40k
+      OS Memory           27300.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        744  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           16
+      
+
+593        
+594        title;
+595        
+596        
+597        proc transpose
+598            data=table_long
+599            out=table_wide(drop=_name_)
+600            prefix=col;
+601        
+602            by agecatn
+603               row_order
+604               display_label;
+605        
+606            id trtn;
+607            var value;
+608        run;
+
+NOTE: There were 66 observations read from the data set WORK.TABLE_LONG.
+NOTE: The data set WORK.TABLE_WIDE has 22 observations and 6 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              2819.71k
+      OS Memory           29612.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        745  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     179
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           536
+      
+
+609        
+610        
+611        
+612        data final_table;
+613            set table_wide;
+614        
+615            length col1-col3 $50;
+                                                           The SAS System
+
+616            if row_order ne 0 then do;
+617        
+618                if missing(col1) then col1="0 (0.0%)";
+619                if missing(col2) then col2="0 (0.0%)";
+620                if missing(col3) then col3="0 (0.0%)";
+621        
+622            end;
+623        run;
+
+NOTE: There were 22 observations read from the data set WORK.TABLE_WIDE.
+NOTE: The data set WORK.FINAL_TABLE has 22 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              801.75k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        746  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+624        
+625        
+626        data table_lt65
+627             table_ge65;
+628        
+629            set final_table;
+630        
+631            if agecatn=1 then
+632                output table_lt65;
+633        
+634            else if agecatn=2 then
+635                output table_ge65;
+636        run;
+
+NOTE: There were 22 observations read from the data set WORK.FINAL_TABLE.
+NOTE: The data set WORK.TABLE_LT65 has 11 observations and 6 variables.
+NOTE: The data set WORK.TABLE_GE65 has 11 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1149.25k
+      OS Memory           27820.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        747  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     185
+      Page Swaps                        0
+      Voluntary Context Switches        20
+      Involuntary Context Switches      0
+                                                           The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+637        
+638        
+639        proc print data=final_table noobs;
+640            var agecatn
+641                row_order
+642                display_label
+643                col1-col3;
+644        
+645            title "Diagnostic: Final Table 13 Dataset";
+646        run;
+
+NOTE: There were 22 observations read from the data set WORK.FINAL_TABLE.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              634.71k
+      OS Memory           27300.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        748  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           16
+      
+
+647        
+648        title;
+649        
+650        
+651        ods listing close;
+652        
+653        ods rtf
+654            file="&OUTPATH./Output_6.rtf"
+655            style=journal
+656            bodytitle;
+NOTE: Writing RTF Body file: /home/u64124548/sasuser.v94/TLF - Creation/Output/Output_6.rtf
+657        
+658        
+659        title1 j=c height=10pt
+660            "Table 13:";
+661        
+662        title2 j=c height=10pt
+663            "Best Overall Response per Investigator by Age Category";
+664        
+665        title3 j=c height=10pt
+666            "ITT Subjects";
+667        
+668        
+669        
+670        %macro age_section(
+                                                           The SAS System
+
+671            data=,
+672            subgroup=,
+673            na=,
+674            nb=,
+675            nt=
+676        );
+677        
+678        
+679        ods rtf text=
+680        "^S={
+681            font_face='Courier New'
+682            font_size=8pt
+683            font_weight=bold
+684            just=left
+685        }
+686        Subgroup: Age Category - &subgroup";
+687        
+688        
+689        proc report
+690            data=&data
+691            nowd
+692            missing
+693            split="|"
+694        
+695            style(report)=[
+696                frame=hsides
+697                rules=groups
+698                cellpadding=1
+699                cellspacing=0
+700                width=9.2in
+701                font_face="Courier New"
+702                font_size=8pt
+703            ]
+704        
+705            style(header)=[
+706                font_face="Courier New"
+707                font_size=8pt
+708                font_weight=normal
+709                just=center
+710                borderbottomwidth=1
+711            ]
+712        
+713            style(column)=[
+714                font_face="Courier New"
+715                font_size=8pt
+716            ];
+717        
+718        
+719            columns row_order
+720                    display_label
+721        
+722                    (
+723                        "Number of Subjects (%)"
+724                        col1
+725                        col2
+726                        col3
+727                    );
+728        
+                                                           The SAS System
+
+729        
+730            define row_order /
+731                order
+732                noprint;
+733        
+734        
+735            define display_label /
+736                display
+737                " "
+738                style(column)=[
+739                    cellwidth=4.0in
+740                    just=left
+741                    asis=on
+742                ];
+743        
+744        
+745            define col1 /
+746                display
+747                "Trt A|(N=&na)"
+748                style(column)=[
+749                    cellwidth=1.55in
+750                    just=center
+751                ];
+752        
+753        
+754            define col2 /
+755                display
+756                "Trt B|(N=&nb)"
+757                style(column)=[
+758                    cellwidth=1.55in
+759                    just=center
+760                ];
+761        
+762        
+763            define col3 /
+764                display
+765                "Total|(N=&nt)"
+766                style(column)=[
+767                    cellwidth=1.55in
+768                    just=center
+769                ];
+770        
+771        
+772            compute display_label;
+773        
+774                if row_order=0 then
+775                    call define(
+776                        _row_,
+777                        "style",
+778                        "style=[font_weight=bold]"
+779                    );
+780        
+781            endcomp;
+782        
+783        
+784            compute before row_order;
+785        
+786                if row_order=7 then
+                                                           The SAS System
+
+787                    line " ";
+788        
+789            endcomp;
+790        
+791        run;
+792        
+793        
+794        ods rtf text=
+795        "^S={font_size=6pt} ";
+796        
+797        
+798        %mend age_section;
+799        
+800        
+801        %age_section(
+802            data=table_lt65,
+803            subgroup=< 65,
+804            na=&n_lt65_a,
+805            nb=&n_lt65_b,
+806            nt=&n_lt65_t
+807        );
+NOTE: Line generated by the invoked macro "AGE_SECTION".
+807                 just=center         borderbottomwidth=1     ]      style(column)=[         font_face="Courier New"
+                    ____
+                    79
+                    76
+807      ! font_size=8pt     ];       columns row_order             display_label              (                 "Number of Subjects
+807      !  (%)"
+
+ERROR 79-322: Expecting a (.
+
+ERROR 76-322: Syntax error, statement will be ignored.
+
+NOTE: There were 11 observations read from the data set WORK.TABLE_LT65.
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.00 seconds
+      memory              7130.93k
+      OS Memory           33456.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        749  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     655
+      Page Swaps                        0
+      Voluntary Context Switches        18
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           16
+      
+
+808        
+809        
+810        
+811        %age_section(
+812            data=table_ge65,
+813            subgroup=>= 65,
+814            na=&n_ge65_a,
+                                                           The SAS System
+
+815            nb=&n_ge65_b,
+816            nt=&n_ge65_t
+817        );
+NOTE: Line generated by the invoked macro "AGE_SECTION".
+817                 just=center         borderbottomwidth=1     ]      style(column)=[         font_face="Courier New"
+                    ____
+                    79
+                    76
+817      ! font_size=8pt     ];       columns row_order             display_label              (                 "Number of Subjects
+817      !  (%)"
+
+ERROR 79-322: Expecting a (.
+
+ERROR 76-322: Syntax error, statement will be ignored.
+
+NOTE: There were 11 observations read from the data set WORK.TABLE_GE65.
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.01 seconds
+      memory              6857.03k
+      OS Memory           33456.00k
+      Timestamp           07/17/2026 11:26:21 PM
+      Step Count                        750  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     475
+      Page Swaps                        0
+      Voluntary Context Switches        22
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+818        
+819        
+820        ods rtf text=
+821        "^S={
+822            font_face='Arial'
+823            font_size=8pt
+824            just=left
+825        }
+826        Programming Notes: Calculate 95% CI of ORR by PROC FREQ using Binomial exact options.";
+827        
+828        
+829        ods rtf text=
+830        "^S={
+831            font_face='Arial'
+832            font_size=8pt
+833            just=left
+834        }
+835        (1) Objective Response Rate = Complete Response + Partial Response.";
+836        
+837        
+838        ods rtf close;
+839        ods listing;
+840        
+841        title;
+842        footnote;
+                                                           The SAS System
+
+843        
+844        
+845        proc printto;
+846        run;
+

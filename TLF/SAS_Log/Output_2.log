@@ -1,0 +1,1472 @@
+NOTE: PROCEDURE PRINTTO used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              284.93k
+      OS Memory           26276.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        538  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     16
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+85         
+86         
+87         libname xsl xport "&INPATH./ADSL.xpt";
+NOTE: Libref XSL was successfully assigned as follows: 
+      Engine:        XPORT 
+      Physical Name: /home/u64124548/sasuser.v94/TLF - Creation/Input/ADSL.xpt
+88         libname xae xport "&INPATH./ADAE.xpt";
+NOTE: Libref XAE was successfully assigned as follows: 
+      Engine:        XPORT 
+      Physical Name: /home/u64124548/sasuser.v94/TLF - Creation/Input/ADAE.xpt
+89         
+90         proc copy in=xsl out=work memtype=data;
+91         run;
+
+NOTE: Input library XSL is sequential.
+NOTE: Copying XSL.ADSL to WORK.ADSL (memtype=DATA).
+NOTE: BUFSIZE is not cloned when copying across different engines. System Option for BUFSIZE was used.
+NOTE: There were 65 observations read from the data set XSL.ADSL.
+NOTE: The data set WORK.ADSL has 65 observations and 63 variables.
+NOTE: PROCEDURE COPY used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+                                                           The SAS System
+
+      system cpu time     0.00 seconds
+      memory              975.21k
+      OS Memory           26796.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        539  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     99
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+92         
+93         proc copy in=xae out=work memtype=data;
+94         run;
+
+NOTE: Input library XAE is sequential.
+NOTE: Copying XAE.ADAE to WORK.ADAE (memtype=DATA).
+NOTE: BUFSIZE is not cloned when copying across different engines. System Option for BUFSIZE was used.
+NOTE: There were 534 observations read from the data set XAE.ADAE.
+NOTE: The data set WORK.ADAE has 534 observations and 68 variables.
+NOTE: PROCEDURE COPY used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              2231.34k
+      OS Memory           27564.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        540  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     190
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           2584
+      
+
+95         
+96         libname xsl clear;
+NOTE: Libref XSL has been deassigned.
+97         libname xae clear;
+NOTE: Libref XAE has been deassigned.
+98         
+99         
+100        data adsl_safety;
+101            set work.adsl;
+102        
+103            where upcase(strip(saffl))="Y";
+104        
+105            if upcase(strip(trt01a))="PLACEBO" then trtn=1;
+106            else if upcase(strip(trt01a))="CMP-135" then trtn=2;
+107            else delete;
+108        run;
+
+NOTE: There were 65 observations read from the data set WORK.ADSL.
+                                                           The SAS System
+
+      WHERE UPCASE(STRIP(saffl))='Y';
+NOTE: The data set WORK.ADSL_SAFETY has 65 observations and 64 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1017.15k
+      OS Memory           27052.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        541  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     104
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+109        
+110        proc sql;
+111            create table safety_denominators as
+112            select trtn,
+113                   count(distinct usubjid) as denominator
+114            from adsl_safety
+115            group by trtn
+116            order by trtn;
+NOTE: Table WORK.SAFETY_DENOMINATORS created, with 2 rows and 2 columns.
+
+117        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5499.50k
+      OS Memory           31916.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        542  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     152
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+118        
+119        proc sql noprint;
+120            select denominator
+121            into :n_placebo trimmed
+122            from safety_denominators
+123            where trtn=1;
+124        
+125            select denominator
+126            into :n_cmp trimmed
+127            from safety_denominators
+128            where trtn=2;
+                                                           The SAS System
+
+129        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5516.75k
+      OS Memory           31916.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        543  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     86
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+130        
+131        %put NOTE: Placebo safety denominator = &n_placebo;
+NOTE: Placebo safety denominator = 32
+132        %put NOTE: CMP-135 safety denominator = &n_cmp;
+NOTE: CMP-135 safety denominator = 33
+133        
+134        
+135        data adae_te;
+136            set work.adae;
+137        
+138            where upcase(strip(saffl))="Y"
+139              and upcase(strip(trtem))="Y";
+140        
+141            if upcase(strip(trt01a))="PLACEBO" then trtn=1;
+142            else if upcase(strip(trt01a))="CMP-135" then trtn=2;
+143            else delete;
+144        
+145            length soc $200
+146                   pt  $200;
+147        
+148            soc=upcase(strip(aebodsys));
+149            pt=propcase(strip(aedecod));
+150        
+151            if missing(aetoxgrn) then grade=99;
+152            else grade=aetoxgrn;
+153        run;
+
+NOTE: There were 534 observations read from the data set WORK.ADAE.
+      WHERE (UPCASE(STRIP(saffl))='Y') and (UPCASE(STRIP(trtem))='Y');
+NOTE: The data set WORK.ADAE_TE has 534 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3478.34k
+      OS Memory           29100.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        544  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     458
+                                                           The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           3080
+      
+
+154        
+155        
+156        proc sort data=adae_te
+157                  out=pt_sorted;
+158            by trtn
+159               usubjid
+160               soc
+161               pt
+162               descending grade;
+163        run;
+
+NOTE: There were 534 observations read from the data set WORK.ADAE_TE.
+NOTE: The data set WORK.PT_SORTED has 534 observations and 72 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              4684.75k
+      OS Memory           30144.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        545  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     780
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           3088
+      
+
+164        
+165        data pt_worst;
+166            set pt_sorted;
+167        
+168            by trtn
+169               usubjid
+170               soc
+171               pt
+172               descending grade;
+173        
+174            if first.pt;
+175        run;
+
+NOTE: There were 534 observations read from the data set WORK.PT_SORTED.
+NOTE: The data set WORK.PT_WORST has 429 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3632.93k
+      OS Memory           29356.00k
+                                                           The SAS System
+
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        546  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     511
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           2568
+      
+
+176        
+177        
+178        proc sort data=adae_te
+179                  out=soc_sorted;
+180            by trtn
+181               usubjid
+182               soc
+183               descending grade;
+184        run;
+
+NOTE: There were 534 observations read from the data set WORK.ADAE_TE.
+NOTE: The data set WORK.SOC_SORTED has 534 observations and 72 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              4612.78k
+      OS Memory           30144.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        547  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     759
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           3088
+      
+
+185        
+186        data soc_worst;
+187            set soc_sorted;
+188        
+189            by trtn
+190               usubjid
+191               soc
+192               descending grade;
+193        
+194            if first.soc;
+195        
+196            length pt $200;
+197            pt="- Overall -";
+198        run;
+
+NOTE: There were 534 observations read from the data set WORK.SOC_SORTED.
+NOTE: The data set WORK.SOC_WORST has 265 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3056.25k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        548  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     358
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1544
+      
+
+199        
+200        
+201        proc sort data=adae_te
+202                  out=any_sorted;
+203            by trtn
+204               usubjid
+205               descending grade;
+206        run;
+
+NOTE: There were 534 observations read from the data set WORK.ADAE_TE.
+NOTE: The data set WORK.ANY_SORTED has 534 observations and 72 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              4613.40k
+      OS Memory           30144.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        549  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     732
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           3088
+      
+
+207        
+208        data any_worst;
+209            set any_sorted;
+210        
+211            by trtn
+212               usubjid
+213               descending grade;
+214        
+215            if first.usubjid;
+216        
+217            length soc pt $200;
+218        
+219            soc="- ANY ADVERSE EVENTS -";
+220            pt ="";
+                                                           The SAS System
+
+221        run;
+
+NOTE: There were 534 observations read from the data set WORK.ANY_SORTED.
+NOTE: The data set WORK.ANY_WORST has 59 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              2478.78k
+      OS Memory           27820.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        550  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     283
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+222        
+223        
+224        data pt_all;
+225            set pt_worst;
+226            grade=0;
+227        run;
+
+NOTE: There were 429 observations read from the data set WORK.PT_WORST.
+NOTE: The data set WORK.PT_ALL has 429 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3434.06k
+      OS Memory           29100.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        551  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     476
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           2568
+      
+
+228        
+229        data soc_all;
+230            set soc_worst;
+231            grade=0;
+232        run;
+
+NOTE: There were 265 observations read from the data set WORK.SOC_WORST.
+NOTE: The data set WORK.SOC_ALL has 265 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+                                                           The SAS System
+
+      system cpu time     0.00 seconds
+      memory              2313.15k
+      OS Memory           27564.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        552  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     219
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1544
+      
+
+233        
+234        data any_all;
+235            set any_worst;
+236            grade=0;
+237        run;
+
+NOTE: There were 59 observations read from the data set WORK.ANY_WORST.
+NOTE: The data set WORK.ANY_ALL has 59 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1224.43k
+      OS Memory           27052.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        553  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+238        
+239        
+240        data ae_count_source;
+241            length level 8;
+242        
+243            set any_all  (in=a)
+244                any_worst(in=b)
+245                soc_all  (in=c)
+246                soc_worst(in=d)
+247                pt_all   (in=e)
+248                pt_worst (in=f);
+249        
+250            if a or b then level=1;
+251            else if c or d then level=2;
+252            else if e or f then level=3;
+253        run;
+
+NOTE: There were 59 observations read from the data set WORK.ANY_ALL.
+NOTE: There were 59 observations read from the data set WORK.ANY_WORST.
+                                                           The SAS System
+
+NOTE: There were 265 observations read from the data set WORK.SOC_ALL.
+NOTE: There were 265 observations read from the data set WORK.SOC_WORST.
+NOTE: There were 429 observations read from the data set WORK.PT_ALL.
+NOTE: There were 429 observations read from the data set WORK.PT_WORST.
+NOTE: The data set WORK.AE_COUNT_SOURCE has 1506 observations and 73 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              7761.53k
+      OS Memory           33984.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        554  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     1321
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8464
+      
+
+254        
+255        
+256        proc sql;
+257            create table ae_counts as
+258            select level,
+259                   soc,
+260                   pt,
+261                   grade,
+262                   trtn,
+263                   count(distinct usubjid) as count
+264            from ae_count_source
+265            group by level,
+266                     soc,
+267                     pt,
+268                     grade,
+269                     trtn;
+NOTE: Table WORK.AE_COUNTS created, with 568 rows and 6 columns.
+
+270        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              6846.65k
+      OS Memory           32684.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        555  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     398
+      Page Swaps                        0
+      Voluntary Context Switches        40
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+                                                           The SAS System
+
+271        
+272        
+273        
+274        proc sql;
+275            create table soc_order as
+276            select distinct soc
+277            from soc_worst
+278            order by soc;
+NOTE: Table WORK.SOC_ORDER created, with 22 rows and 1 columns.
+
+279        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              6130.40k
+      OS Memory           32428.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        556  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     243
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+280        
+281        data soc_order;
+282            set soc_order;
+283            soc_order=_n_;
+284        run;
+
+NOTE: There were 22 observations read from the data set WORK.SOC_ORDER.
+NOTE: The data set WORK.SOC_ORDER has 22 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              798.65k
+      OS Memory           27052.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        557  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+285        
+286        
+287        proc sql;
+288            create table pt_total_count as
+289            select soc,
+                                                           The SAS System
+
+290                   pt,
+291                   count(distinct usubjid) as total_count
+292            from pt_worst
+293            group by soc,
+294                     pt;
+NOTE: Table WORK.PT_TOTAL_COUNT created, with 153 rows and 3 columns.
+
+295        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              6710.15k
+      OS Memory           32684.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        558  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     433
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           296
+      
+
+296        
+297        proc sort data=pt_total_count;
+298            by soc
+299               descending total_count
+300               pt;
+301        run;
+
+NOTE: There were 153 observations read from the data set WORK.PT_TOTAL_COUNT.
+NOTE: The data set WORK.PT_TOTAL_COUNT has 153 observations and 3 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              840.81k
+      OS Memory           27052.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        559  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     98
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+302        
+303        data pt_order;
+304            set pt_total_count;
+305        
+306            by soc;
+307        
+308            if first.soc then pt_order=0;
+                                                           The SAS System
+
+309            pt_order+1;
+310        run;
+
+NOTE: There were 153 observations read from the data set WORK.PT_TOTAL_COUNT.
+NOTE: The data set WORK.PT_ORDER has 153 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              876.62k
+      OS Memory           27052.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        560  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     106
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+311        
+312        
+313        
+314        data any_hierarchy;
+315            length soc pt $200;
+316        
+317            level=1;
+318            soc="- ANY ADVERSE EVENTS -";
+319            pt="";
+320            soc_order=0;
+321            pt_order=0;
+322        
+323            output;
+324        run;
+
+NOTE: The data set WORK.ANY_HIERARCHY has 1 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              527.81k
+      OS Memory           26792.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        561  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+325        
+326        proc sql;
+327            create table soc_hierarchy as
+                                                           The SAS System
+
+328            select 2 as level,
+329                   a.soc,
+330                   "- Overall -" as pt length=200,
+331                   a.soc_order,
+332                   0 as pt_order
+333            from soc_order as a;
+NOTE: Table WORK.SOC_HIERARCHY created, with 22 rows and 5 columns.
+
+334        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5491.90k
+      OS Memory           31916.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        562  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     112
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+335        
+336        
+337        proc sql;
+338            create table pt_hierarchy as
+339            select 3 as level,
+340                   a.soc,
+341                   a.pt,
+342                   b.soc_order,
+343                   a.pt_order
+344            from pt_order as a
+345        
+346            left join soc_order as b
+347                on a.soc=b.soc;
+NOTE: Table WORK.PT_HIERARCHY created, with 153 rows and 5 columns.
+
+348        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              5751.15k
+      OS Memory           32176.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        563  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     209
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           280
+      
+                                                           The SAS System
+
+
+349        
+350        
+351        data hierarchy;
+352            set any_hierarchy
+353                soc_hierarchy
+354                pt_hierarchy;
+355        run;
+
+NOTE: There were 1 observations read from the data set WORK.ANY_HIERARCHY.
+NOTE: There were 22 observations read from the data set WORK.SOC_HIERARCHY.
+NOTE: There were 153 observations read from the data set WORK.PT_HIERARCHY.
+NOTE: The data set WORK.HIERARCHY has 176 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1419.25k
+      OS Memory           27572.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        564  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     171
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+356        
+357        
+358        data grade_shell;
+359            length grade_label $30;
+360        
+361            grade_order=1;
+362            grade=0;
+363            grade_label="- All grades -";
+364            output;
+365        
+366            grade_order=2;
+367            grade=5;
+368            grade_label="5";
+369            output;
+370        
+371            grade_order=3;
+372            grade=4;
+373            grade_label="4";
+374            output;
+375        
+376            grade_order=4;
+377            grade=3;
+378            grade_label="3";
+379            output;
+380        
+381            grade_order=5;
+382            grade=2;
+383            grade_label="2";
+                                                           The SAS System
+
+384            output;
+385        
+386            grade_order=6;
+387            grade=1;
+388            grade_label="1";
+389            output;
+390        
+391            grade_order=7;
+392            grade=99;
+393            grade_label="Not graded";
+394            output;
+395        run;
+
+NOTE: The data set WORK.GRADE_SHELL has 7 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              537.78k
+      OS Memory           26792.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        565  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+396        
+397        
+398        proc sql;
+399            create table ungraded_rows as
+400            select distinct level,
+401                   soc,
+402                   pt
+403            from ae_counts
+404            where grade=99;
+NOTE: Table WORK.UNGRADED_ROWS created, with 0 rows and 3 columns.
+
+405        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5605.37k
+      OS Memory           31916.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        566  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+                                                           The SAS System
+
+      
+
+406        
+407        
+408        proc sql;
+409            create table hierarchy_grades as
+410            select h.level,
+411                   h.soc,
+412                   h.pt,
+413                   h.soc_order,
+414                   h.pt_order,
+415                   g.grade,
+416                   g.grade_order,
+417                   g.grade_label
+418            from hierarchy as h,
+419                 grade_shell as g
+420        
+421            where g.grade ne 99
+422        
+423               or exists
+424                  (
+425                      select 1
+426                      from ungraded_rows as u
+427                      where h.level=u.level
+428                        and h.soc=u.soc
+429                        and h.pt=u.pt
+430                  )
+431        
+432            order by h.soc_order,
+433                     h.level,
+434                     h.pt_order,
+435                     g.grade_order;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.HIERARCHY_GRADES created, with 1056 rows and 8 columns.
+
+436        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              17243.23k
+      OS Memory           41632.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        567  Switch Count  3
+      Page Faults                       0
+      Page Reclaims                     331
+      Page Swaps                        0
+      Voluntary Context Switches        29
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+437        
+438        
+439        
+440        data treatment_shell;
+441            do trtn=1 to 2;
+                                                           The SAS System
+
+442                output;
+443            end;
+444        run;
+
+NOTE: The data set WORK.TREATMENT_SHELL has 2 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.00k
+      OS Memory           26792.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        568  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+445        
+446        proc sql;
+447            create table full_shell as
+448            select h.*,
+449                   t.trtn
+450            from hierarchy_grades as h,
+451                 treatment_shell as t
+452        
+453            order by h.soc_order,
+454                     h.level,
+455                     h.pt_order,
+456                     h.grade_order,
+457                     t.trtn;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.FULL_SHELL created, with 2112 rows and 9 columns.
+
+458        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              15275.60k
+      OS Memory           39100.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        569  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     377
+      Page Swaps                        0
+      Voluntary Context Switches        44
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           2056
+      
+
+459        
+460        
+                                                           The SAS System
+
+461        proc sql;
+462            create table ae_full as
+463            select s.level,
+464                   s.soc,
+465                   s.pt,
+466                   s.soc_order,
+467                   s.pt_order,
+468                   s.grade,
+469                   s.grade_order,
+470                   s.grade_label,
+471                   s.trtn,
+472                   coalesce(c.count,0) as count,
+473                   d.denominator
+474        
+475            from full_shell as s
+476        
+477            left join ae_counts as c
+478                on  s.level=c.level
+479                and s.soc=c.soc
+480                and s.pt=c.pt
+481                and s.grade=c.grade
+482                and s.trtn=c.trtn
+483        
+484            left join safety_denominators as d
+485                on s.trtn=d.trtn
+486        
+487            order by s.soc_order,
+488                     s.level,
+489                     s.pt_order,
+490                     s.grade_order,
+491                     s.trtn;
+NOTE: Table WORK.AE_FULL created, with 2112 rows and 11 columns.
+
+492        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              55237.81k
+      OS Memory           79508.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        570  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     1430
+      Page Swaps                        0
+      Voluntary Context Switches        115
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           4880
+      
+
+493        
+494        
+495        data ae_formatted;
+496            set ae_full;
+497        
+498            length value $40;
+499        
+                                                           The SAS System
+
+500            value=cats(
+501                strip(put(count,3.)),
+502                " (",
+503                strip(put(100*count/denominator,5.1)),
+504                "%)"
+505            );
+506        run;
+
+NOTE: There were 2112 observations read from the data set WORK.AE_FULL.
+NOTE: The data set WORK.AE_FORMATTED has 2112 observations and 12 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              2981.65k
+      OS Memory           29868.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        571  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     398
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           2320
+      
+
+507        
+508        
+509        proc sort data=ae_formatted;
+510            by soc_order
+511               level
+512               pt_order
+513               soc
+514               pt
+515               grade_order
+516               grade
+517               grade_label
+518               trtn;
+519        run;
+
+NOTE: There were 2112 observations read from the data set WORK.AE_FORMATTED.
+NOTE: The data set WORK.AE_FORMATTED has 2112 observations and 12 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              5033.34k
+      OS Memory           32192.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        572  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     823
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           2312
+                                                           The SAS System
+
+      
+
+520        
+521        proc transpose data=ae_formatted
+522                       out=ae_wide(drop=_name_)
+523                       prefix=col;
+524        
+525            by soc_order
+526               level
+527               pt_order
+528               soc
+529               pt
+530               grade_order
+531               grade
+532               grade_label;
+533        
+534            id trtn;
+535            var value;
+536        run;
+
+NOTE: There were 2112 observations read from the data set WORK.AE_FORMATTED.
+NOTE: The data set WORK.AE_WIDE has 1056 observations and 10 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              3896.59k
+      OS Memory           31152.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        573  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     342
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1552
+      
+
+537        
+538        
+539        data final_ae;
+540            set ae_wide;
+541        
+542            length display_term $200;
+543        
+544            if grade=0 then do;
+545        
+546                if level=1 then
+547                    display_term="- Any adverse events -";
+548        
+549                else if level=2 then
+550                    display_term=upcase(strip(soc));
+551        
+552                else if level=3 then
+553                    display_term="   " || strip(pt);
+554        
+555            end;
+                                                           The SAS System
+
+556        
+557            else display_term="";
+558        
+559        
+560            retain row_number 0;
+561        
+562            row_number+1;
+563        
+564            page_group=ceil(row_number/38);
+565        run;
+
+NOTE: There were 1056 observations read from the data set WORK.AE_WIDE.
+NOTE: The data set WORK.FINAL_AE has 1056 observations and 13 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              2179.00k
+      OS Memory           28716.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        574  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     187
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1808
+      
+
+566        
+567        
+568        proc print data=final_ae(obs=100) noobs;
+569            var soc_order
+570                level
+571                pt_order
+572                display_term
+573                grade_label
+574                col1
+575                col2;
+576        
+577            title "Diagnostic Output 2 Data";
+578        run;
+
+NOTE: There were 100 observations read from the data set WORK.FINAL_AE.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.08 seconds
+      system cpu time     0.00 seconds
+      memory              1864.37k
+      OS Memory           28712.00k
+      Timestamp           07/17/2026 11:25:50 PM
+      Step Count                        575  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     226
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      0
+                                                           The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           32
+      
+
+579        
+580        title;
+581        
+582        
+583        ods listing close;
+584        
+585        ods rtf file="&OUTPATH./Output_2.rtf"
+586                style=journal
+587                bodytitle;
+NOTE: Writing RTF Body file: /home/u64124548/sasuser.v94/TLF - Creation/Output/Output_2.rtf
+588        
+589        title1 j=c height=9pt
+590               "Table 14.3/2";
+591        
+592        title2 j=c height=9pt
+593               "Treatment-Emergent Adverse Events by MedDRA System Organ Class,";
+594        
+595        title3 j=c height=9pt
+596               "Preferred Term and Maximum NCI-CTCAE Grade";
+597        
+598        title4 j=c height=9pt
+599               "Safety-Evaluable Patients";
+600        
+601        /* footnote1 j=l height=7pt */
+602        /*     "NCI CTCAE = National Cancer Institute Common Terminology Criteria for Adverse Events."; */
+603        /*  */
+604        /* footnote2 j=l height=7pt */
+605        /*     "A patient with multiple occurrences of the same preferred term is counted once at the highest grade."; */
+606        /*  */
+607        /* footnote3 j=l height=7pt */
+608        /*     "Percentages are based on the number of safety-evaluable patients in each treatment group."; */
+609        /*  */
+610        /* footnote4 j=l height=7pt */
+611        /*     "Study PRJ5457C     TLG Specifications, Version v1.0"; */
+612        
+613        proc report data=final_ae
+614                    nowd
+615                    missing
+616                    split="|"
+617        
+618                    style(report)=[
+619                        frame=hsides
+620                        rules=groups
+621                        cellpadding=0
+622                        cellspacing=0
+623                        width=6.8in
+624                        font_face="Arial"
+625                        font_size=7.5pt
+626                    ]
+627        
+628                    style(header)=[
+629                        font_face="Arial"
+630                        font_size=7.5pt
+631                        font_weight=normal
+                                                           The SAS System
+
+632                        just=center
+                           ____
+                           79
+                           76
+ERROR 79-322: Expecting a (.
+ERROR 76-322: Syntax error, statement will be ignored.
+633                        borderbottomwidth=1
+634                    ]
+635        
+636                    style(column)=[
+637                        font_face="Arial"
+638                        font_size=7.5pt
+639                    ];
+640        
+641            columns page_group
+642                    soc_order
+643                    level
+644                    pt_order
+645                    grade_order
+646                    display_term
+647                    grade_label
+648                    col1
+649                    col2;
+650        
+651            define page_group /
+652                order
+653                noprint;
+654        
+655            define soc_order /
+656                order
+657                noprint;
+658        
+659            define level /
+660                order
+661                noprint;
+662        
+663            define pt_order /
+664                order
+665                noprint;
+666        
+667            define grade_order /
+668                order
+669                noprint;
+670        
+671            define display_term /
+672                display
+673                "MedDRA System Organ Class and|Preferred Term"
+674                style(column)=[
+675                    cellwidth=2.75in
+676                    just=left
+677                    asis=on
+678                ];
+679        
+680            define grade_label /
+681                display
+682                "NCI-CTCAE Grade"
+683                style(column)=[
+684                    cellwidth=1.0in
+                                                           The SAS System
+
+685                    just=center
+686                ];
+687        
+688            define col1 /
+689                display
+690                "Placebo|(n=&n_placebo)"
+691                style(column)=[
+692                    cellwidth=1.05in
+693                    just=center
+694                ];
+695        
+696            define col2 /
+697                display
+698                "CMP-135|(n=&n_cmp)"
+699                style(column)=[
+700                    cellwidth=1.05in
+701                    just=center
+702                ];
+703        
+704            break after page_group / page;
+705        
+706        run;
+
+NOTE: There were 1056 observations read from the data set WORK.FINAL_AE.
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.85 seconds
+      user cpu time       0.84 seconds
+      system cpu time     0.01 seconds
+      memory              9049.46k
+      OS Memory           34620.00k
+      Timestamp           07/17/2026 11:25:51 PM
+      Step Count                        576  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     823
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           960
+      
+
+707        
+708        ods rtf close;
+709        ods listing;
+710        
+711        title;
+712        footnote;
+713        
+714        proc printto;
+715        run;
+

@@ -1,0 +1,912 @@
+NOTE: PROCEDURE PRINTTO used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              313.87k
+      OS Memory           27808.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        692  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     16
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+87         
+88         
+89         data _null_;
+90             file "&OUTPATH./Output_5_Path_Test.txt";
+91             put "The Output folder is writable.";
+92         run;
+
+NOTE: The file "/home/u64124548/sasuser.v94/TLF - Creation/Output/Output_5_Path_Test.txt" is:
+      Filename=/home/u64124548/sasuser.v94/TLF - Creation/Output/Output_5_Path_Test.txt,
+      Owner Name=u64124548,Group Name=oda,
+      Access Permission=-rw-r--r--,
+      Last Modified=17Jul2026:19:26:11
+
+NOTE: 1 record was written to the file "/home/u64124548/sasuser.v94/TLF - Creation/Output/Output_5_Path_Test.txt".
+      The minimum record length was 30.
+      The maximum record length was 30.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              316.71k
+      OS Memory           27808.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        693  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     25
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+93         
+94         
+95         libname xtte xport "&INPATH./ADTTE.xpt";
+NOTE: Libref XTTE was successfully assigned as follows: 
+      Engine:        XPORT 
+      Physical Name: /home/u64124548/sasuser.v94/TLF - Creation/Input/ADTTE.xpt
+96         
+97         proc copy
+98             in=xtte
+99             out=work
+100            memtype=data;
+101        run;
+
+NOTE: Input library XTTE is sequential.
+NOTE: Copying XTTE.ADTTE to WORK.ADTTE (memtype=DATA).
+NOTE: BUFSIZE is not cloned when copying across different engines. System Option for BUFSIZE was used.
+NOTE: There were 193 observations read from the data set XTTE.ADTTE.
+NOTE: The data set WORK.ADTTE has 193 observations and 48 variables.
+NOTE: PROCEDURE COPY used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              1018.21k
+      OS Memory           28328.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        694  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     85
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+102        
+103        libname xtte clear;
+NOTE: Libref XTTE has been deassigned.
+104        
+105        
+106        proc contents data=work.adtte varnum;
+107        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.05 seconds
+                                                           The SAS System
+
+      user cpu time       0.05 seconds
+      system cpu time     0.00 seconds
+      memory              1639.12k
+      OS Memory           28328.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        695  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     93
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           24
+      
+
+108        
+109        
+110        proc format;
+111            value trtf
+112                1 = "Placebo"
+113                2 = "CMP-135";
+NOTE: Format TRTF is already on the library WORK.FORMATS.
+NOTE: Format TRTF has been output.
+114        run;
+
+NOTE: PROCEDURE FORMAT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              100.81k
+      OS Memory           27808.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        696  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     14
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           32
+      
+
+115        
+116        
+117        
+118        data pfs_second;
+119            set work.adtte;
+120        
+121            where upcase(strip(ittfl))  = "Y"
+122              and upcase(strip(paramcd)) = "TTPFS"
+123              and remissn = 1;
+124        
+125            length treatment $20;
+126        
+127            if upcase(strip(trt01a)) = "PLACEBO" then do;
+128                trtn      = 1;
+129                treatment = "Placebo";
+130            end;
+                                                           The SAS System
+
+131        
+132            else if upcase(strip(trt01a)) = "CMP-135" then do;
+133                trtn      = 2;
+134                treatment = "CMP-135";
+135            end;
+136        
+137            else delete;
+138        
+139        
+140        
+141            if cnsr < 0.5 then status = 0;
+142            else status = 1;
+143            format trtn trtf.;
+144        run;
+
+NOTE: There were 52 observations read from the data set WORK.ADTTE.
+      WHERE (UPCASE(STRIP(ittfl))='Y') and (UPCASE(STRIP(paramcd))='TTPFS') and (remissn=1);
+NOTE: The data set WORK.PFS_SECOND has 52 observations and 51 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1147.81k
+      OS Memory           28328.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        697  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+145        
+146        
+147        proc sort data=pfs_second;
+148            by trtn aval;
+149        run;
+
+NOTE: There were 52 observations read from the data set WORK.PFS_SECOND.
+NOTE: The data set WORK.PFS_SECOND has 52 observations and 51 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              874.62k
+      OS Memory           28328.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        698  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     103
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+                                                           The SAS System
+
+      
+
+150        
+151        
+152        
+153        title "Diagnostic: Second-Remission PFS Population";
+154        
+155        proc freq data=pfs_second;
+156            tables trtn*status / missing;
+157            format trtn trtf.;
+158        run;
+
+NOTE: There were 52 observations read from the data set WORK.PFS_SECOND.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              1571.34k
+      OS Memory           28588.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        699  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           544
+      
+
+159        
+160        proc print data=pfs_second(obs=20) noobs;
+161            var usubjid
+162                trtn
+163                trt01a
+164                remissn
+165                paramcd
+166                aval
+167                cnsr
+168                status
+169                evntdesc;
+170        
+171            format trtn trtf.;
+172        run;
+
+NOTE: There were 20 observations read from the data set WORK.PFS_SECOND.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.00 seconds
+      memory              616.75k
+      OS Memory           28068.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        700  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        0
+                                                           The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           16
+      
+
+173        
+174        title;
+175        
+176        
+177        proc sql noprint;
+178        
+179            select count(distinct usubjid)
+180            into :n_placebo trimmed
+181            from pfs_second
+182            where trtn = 1;
+183        
+184            select count(distinct usubjid)
+185            into :n_cmp trimmed
+186            from pfs_second
+187            where trtn = 2;
+188        
+189        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5534.65k
+      OS Memory           33192.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        701  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     90
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           16
+      
+
+190        
+191        %put NOTE: Placebo denominator = &n_placebo;
+NOTE: Placebo denominator = 26
+192        %put NOTE: CMP-135 denominator = &n_cmp;
+NOTE: CMP-135 denominator = 26
+193        
+194        
+195        ods exclude all;
+196        
+197        ods output Quartiles=quart_placebo;
+198        
+199        proc lifetest data=pfs_second
+200                      method=km
+201                      alpha=0.05
+202                      notable;
+203        
+204            where trtn = 1;
+205        
+206            time aval*status(1);
+                                                           The SAS System
+
+207        run;
+
+WARNING: Output 'Quartiles' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, 
+         verify that the appropriate procedure options are used to produce the requested output object.  For example, verify that 
+         the NOPRINT option is not used.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1265.37k
+      OS Memory           28588.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        702  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     117
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+208        
+209        ods exclude none;
+210        
+211        
+212        ods exclude all;
+213        
+214        ods output Quartiles=quart_cmp;
+215        
+216        proc lifetest data=pfs_second
+217                      method=km
+218                      alpha=0.05
+219                      notable;
+220        
+221            where trtn = 2;
+222        
+223            time aval*status(1);
+224        run;
+
+WARNING: Output 'Quartiles' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, 
+         verify that the appropriate procedure options are used to produce the requested output object.  For example, verify that 
+         the NOPRINT option is not used.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              1321.37k
+      OS Memory           28588.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        703  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     117
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           280
+                                                           The SAS System
+
+      
+
+225        
+226        ods exclude none;
+227        
+228        
+229        %let median_placebo = NE;
+230        %let median_cmp     = NE;
+231        
+232        
+233        data _null_;
+234            set quart_placebo;
+ERROR: File WORK.QUART_PLACEBO.DATA does not exist.
+235        
+236            percentile = input(vvaluex("PERCENT"), best.);
+237            estimate   = input(vvaluex("ESTIMATE"), best.);
+238        
+239            if percentile = 50 then do;
+240        
+241                if missing(estimate) then
+242                    call symputx("median_placebo", "NE");
+243        
+244                else
+245                    call symputx(
+246                        "median_placebo",
+247                        strip(put(estimate, 6.1))
+248                    );
+249        
+250            end;
+251        run;
+
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              325.28k
+      OS Memory           27808.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        704  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     23
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+252        
+253        
+254        data _null_;
+255            set quart_cmp;
+ERROR: File WORK.QUART_CMP.DATA does not exist.
+256        
+257            percentile = input(vvaluex("PERCENT"), best.);
+258            estimate   = input(vvaluex("ESTIMATE"), best.);
+259        
+                                                           The SAS System
+
+260            if percentile = 50 then do;
+261        
+262                if missing(estimate) then
+263                    call symputx("median_cmp", "NE");
+264        
+265                else
+266                    call symputx(
+267                        "median_cmp",
+268                        strip(put(estimate, 6.1))
+269                    );
+270        
+271            end;
+272        run;
+
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              340.18k
+      OS Memory           27808.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        705  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     23
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+273        
+274        %put NOTE: Placebo median PFS = &median_placebo;
+NOTE: Placebo median PFS = NE
+275        %put NOTE: CMP-135 median PFS = &median_cmp;
+NOTE: CMP-135 median PFS = NE
+276        
+277        
+278        ods exclude all;
+279        
+280        ods output HazardRatios=hazard_ratio_output;
+281        
+282        proc phreg data=pfs_second;
+283        
+284            class trtn(ref="1") / param=ref;
+285        
+286            model aval*status(1) = trtn
+287                / risklimits;
+288        
+289            hazardratio trtn / diff=ref;
+290        
+291            format trtn trtf.;
+292        run;
+
+ERROR: Invalid reference value for TRTN.
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: PROCEDURE PHREG used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              645.25k
+      OS Memory           28068.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        706  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+WARNING: Output 'HazardRatios' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, 
+         verify that the appropriate procedure options are used to produce the requested output object.  For example, verify that 
+         the NOPRINT option is not used.
+293        
+294        ods exclude none;
+295        
+296        
+297        %let hazard_ratio = NE;
+298        %let hazard_lcl   = NE;
+299        %let hazard_ucl   = NE;
+300        
+301        
+
+
+302        data _null_;
+303            set hazard_ratio_output;
+ERROR: File WORK.HAZARD_RATIO_OUTPUT.DATA does not exist.
+304        
+305            hr  = input(vvaluex("HAZARDRATIO"), best.);
+306            lcl = input(vvaluex("HRLOWERCL"), best.);
+307            ucl = input(vvaluex("HRUPPERCL"), best.);
+308        
+309            if not missing(hr) then
+310                call symputx(
+311                    "hazard_ratio",
+312                    strip(put(hr, 6.3))
+313                );
+314        
+315            if not missing(lcl) then
+316                call symputx(
+317                    "hazard_lcl",
+318                    strip(put(lcl, 6.3))
+319                );
+320        
+321            if not missing(ucl) then
+322                call symputx(
+323                    "hazard_ucl",
+324                    strip(put(ucl, 6.3))
+325                );
+326        run;
+
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: DATA statement used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              326.28k
+      OS Memory           27808.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        707  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     23
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+327        
+328        %put NOTE: Hazard ratio = &hazard_ratio;
+NOTE: Hazard ratio = NE
+329        %put NOTE: Hazard-ratio 95% CI = (&hazard_lcl, &hazard_ucl);
+NOTE: Hazard-ratio 95% CI = (NE, NE)
+330        
+331        
+332        ods exclude all;
+333        
+334        ods output HomTests=homogeneity_tests;
+335        
+336        proc lifetest data=pfs_second
+337                      method=km
+338                      notable;
+339        
+340            time aval*status(1);
+341        
+342            strata trtn / test=logrank;
+343        
+344            format trtn trtf.;
+345        run;
+
+NOTE: The data set WORK.HOMOGENEITY_TESTS has 1 observations and 4 variables.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2606.71k
+      OS Memory           28588.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        708  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     191
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+346        
+347        ods exclude none;
+                                                           The SAS System
+
+348        
+349        
+350        %let logrank_p = NE;
+351        
+352        data _null_;
+353            set homogeneity_tests;
+354        
+355            length test_name $100;
+356        
+357            test_name = upcase(vvaluex("TEST"));
+358        
+359            if index(test_name, "LOG") > 0 then do;
+360        
+361                pvalue = input(vvaluex("PROBCHISQ"), best.);
+362        
+363                if missing(pvalue) then
+364                    pvalue = input(vvaluex("PVALUE"), best.);
+365        
+366                if not missing(pvalue) then do;
+367        
+368                    if pvalue < 0.0001 then
+369                        call symputx("logrank_p", "<0.0001");
+370        
+371                    else
+372                        call symputx(
+373                            "logrank_p",
+374                            strip(put(pvalue, 6.4))
+375                        );
+376        
+377                end;
+378        
+379            end;
+380        run;
+
+NOTE: There were 1 observations read from the data set WORK.HOMOGENEITY_TESTS.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              737.65k
+      OS Memory           27556.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        709  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+381        
+382        %put NOTE: Log-rank p-value = &logrank_p;
+NOTE: Log-rank p-value = 0.2890
+383        
+384        
+385        ods _all_ close;
+                                                           The SAS System
+
+386        
+387        
+388        
+389        ods html5
+390            path="&OUTPATH"
+391            gpath="&OUTPATH"
+392            file="Output_5.html"
+393            style=htmlblue
+394            options(bitmap_mode="separate");
+NOTE: Writing HTML5 Body file: Output_5.html
+395        
+396        
+397        ods graphics /
+398            reset=all
+399            reset=index
+400            width=9.2in
+401            height=5.7in
+402            imagename="Output_5"
+403            imagefmt=png
+404            border=off;
+405        
+406        
+407        title1 j=c height=9pt
+408            "Figures 14.2.1/2";
+409        
+410        title2 j=c height=9pt
+411            "Kaplan Meier Curves for Progression Free Survival by Treatment Arm in Second Remission";
+412        
+413        title3 j=c height=9pt
+414            "Randomized Subjects with 2nd Remission";
+415        
+416        
+417        
+418        proc lifetest data=pfs_second
+419                      method=km
+420        
+421                      plots=survival(
+422                          atrisk=0 to 15 by 3
+423                          outside
+424                      );
+425        
+426            time aval*status(1);
+427        
+428            strata trtn / test=logrank;
+429        
+430            format trtn trtf.;
+431        run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress 
+      using this transform, specify CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.24 seconds
+      user cpu time       0.14 seconds
+      system cpu time     0.01 seconds
+      memory              11738.00k
+      OS Memory           35124.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        710  Switch Count  0
+                                                           The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     2344
+      Page Swaps                        0
+      Voluntary Context Switches        414
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           504
+      
+
+432        
+433        
+434        ods html5 text=
+435        "<p style='font-family:Arial; font-size:9pt;'>
+436        Median Time (months):
+437        Placebo=&median_placebo;
+438        CMP-135=&median_cmp
+439        </p>";
+440        
+441        ods html5 text=
+442        "<p style='font-family:Arial; font-size:9pt;'>
+443        Hazard Ratio=&hazard_ratio;
+444        95% CI=(&hazard_lcl, &hazard_ucl)
+445        </p>";
+446        
+447        ods html5 text=
+448        "<p style='font-family:Arial; font-size:9pt;'>
+449        Log-rank p-value=&logrank_p
+450        </p>";
+451        
+452        
+453        ods html5 close;
+454        
+455        
+456        ods graphics /
+457            reset=all
+458            reset=index
+459            width=9.2in
+460            height=5.7in
+461            imagename="Output_5"
+462            imagefmt=png
+463            border=off;
+464        
+465        
+466        ods rtf
+467            file="&OUTPATH./Output_5.rtf"
+468            style=journal
+469            bodytitle;
+NOTE: Writing RTF Body file: /home/u64124548/sasuser.v94/TLF - Creation/Output/Output_5.rtf
+470        
+471        
+472        title1 j=c height=9pt
+473            "Figures 14.2.1/2";
+474        
+475        title2 j=c height=9pt
+476            "Kaplan Meier Curves for Progression Free Survival by Treatment Arm in Second Remission";
+477        
+478        title3 j=c height=9pt
+479            "Randomized Subjects with 2nd Remission";
+                                                           The SAS System
+
+480        
+481        
+482        /* footnote1 j=l height=7pt */
+483        /*     "Study PRJ5457C" */
+484        /*     j=r */
+485        /*     "Page 69 of 80"; */
+486        /*  */
+487        /* footnote2 j=l height=7pt */
+488        /*     "TLG Specifications, Version v1.0" */
+489        /*     j=r */
+490        /*     "Date: %sysfunc(today(),date9.)"; */
+491        
+492        
+493        proc lifetest data=pfs_second
+494                      method=km
+495        
+496                      plots=survival(
+497                          atrisk=0 to 15 by 3
+498                          outside
+499                      );
+500        
+501            time aval*status(1);
+502        
+503            strata trtn / test=logrank;
+504        
+505            format trtn trtf.;
+506        run;
+
+NOTE: The LOGLOG transform is used to compute the confidence limits for the quartiles of the survivor distribution. To suppress 
+      using this transform, specify CONFTYPE=LINEAR in the PROC LIFETEST statement.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.24 seconds
+      user cpu time       0.13 seconds
+      system cpu time     0.02 seconds
+      memory              15686.98k
+      OS Memory           37048.00k
+      Timestamp           07/17/2026 11:26:11 PM
+      Step Count                        711  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     2255
+      Page Swaps                        0
+      Voluntary Context Switches        399
+      Involuntary Context Switches      5
+      Block Input Operations            0
+      Block Output Operations           656
+      
+
+507        
+508        
+509        ods rtf text=
+510        "^S={
+511            font_face='Arial'
+512            font_size=8pt
+513            just=left
+514        }
+515        Median Time (months): Placebo=&median_placebo; CMP-135=&median_cmp";
+516        
+517        
+                                                           The SAS System
+
+518        ods rtf text=
+519        "^S={
+520            font_face='Arial'
+521            font_size=8pt
+522            just=left
+523        }
+524        Hazard Ratio=&hazard_ratio; 95% CI=(&hazard_lcl, &hazard_ucl)";
+525        
+526        
+527        ods rtf text=
+528        "^S={
+529            font_face='Arial'
+530            font_size=8pt
+531            just=left
+532        }
+533        Log-rank p-value=&logrank_p";
+534        
+535        
+536        ods rtf close;
+537        
+538        
+539        ods html5;
+NOTE: Writing HTML5 Body file: sashtml21.htm
+ERROR: Insufficient authorization to access /pbr/biconfig/940/Lev1/SASApp/sashtml21.htm.
+ERROR: No body file. HTML5 output will not be created.
+540        
+541        title;
+542        footnote;
+543        
+544        
+545        proc printto;
+546        run;
+

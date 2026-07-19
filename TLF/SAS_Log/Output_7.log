@@ -1,0 +1,692 @@
+NOTE: PROCEDURE PRINTTO used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              371.81k
+      OS Memory           27552.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        757  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     16
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+87         
+88         
+89         proc import
+90             datafile="&INPATH./ADEFF.xls"
+91             out=work.adeff_raw
+92             dbms=xls
+93             replace;
+94         
+95             sheet="ADEFF";
+96             getnames=yes;
+97         run;
+
+NOTE: One or more variables were converted because the data type is not supported by the V9 engine. For more details, run with 
+      options MSGLEVEL=I.
+NOTE: The import data set has 500 observations and 26 variables.
+NOTE: WORK.ADEFF_RAW data set was successfully created.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              1908.25k
+      OS Memory           28860.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        758  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     315
+      Page Swaps                        0
+      Voluntary Context Switches        26
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+98         
+99         
+100        proc contents data=work.adeff_raw varnum;
+101        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.04 seconds
+      system cpu time     0.00 seconds
+      memory              1669.15k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        759  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           24
+      
+
+102        
+103        proc print data=work.adeff_raw(obs=20) noobs;
+104            title "Diagnostic: Imported ADEFF";
+105        run;
+
+NOTE: There were 20 observations read from the data set WORK.ADEFF_RAW.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.05 seconds
+      user cpu time       0.06 seconds
+      system cpu time     0.00 seconds
+      memory              970.78k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        760  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        7
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           32
+      
+
+                                                           The SAS System
+
+106        
+107        title;
+108        
+109        
+110        data viral_load;
+111            set work.adeff_raw;
+112        
+113            where upcase(strip(ittfl))="Y"
+114              and upcase(strip(paramcd))="VLOAD"
+115              and upcase(strip(anl01fl))="Y"
+116              and not missing(aval);
+117        
+118            length treatment $20
+119                   test_day  $20;
+120        
+121            if upcase(strip(trt01a))="ACTIVE A" then do;
+122                trtn=1;
+123                treatment="Active A";
+124            end;
+125        
+126            else if upcase(strip(trt01a))="ACTIVE B" then do;
+127                trtn=2;
+128                treatment="Active B";
+129            end;
+130        
+131            else delete;
+132        
+133        
+134            select (avisitn);
+135        
+136                when (1) do;
+137                    visit_order=1;
+138                    test_day="Week 1";
+139                end;
+140        
+141                when (4) do;
+142                    visit_order=2;
+143                    test_day="Week 4";
+144                end;
+145        
+146                when (8) do;
+147                    visit_order=3;
+148                    test_day="Week 8";
+149                end;
+150        
+151                when (12) do;
+152                    visit_order=4;
+153                    test_day="Week 12";
+154                end;
+155        
+156                when (16) do;
+157                    visit_order=5;
+158                    test_day="Week 16";
+159                end;
+160        
+161                otherwise delete;
+162        
+163            end;
+                                                           The SAS System
+
+164        run;
+
+NOTE: There were 500 observations read from the data set WORK.ADEFF_RAW.
+      WHERE (UPCASE(STRIP(ittfl))='Y') and (UPCASE(STRIP(paramcd))='VLOAD') and (UPCASE(STRIP(anl01fl))='Y') and (not 
+      MISSING(aval));
+NOTE: The data set WORK.VIRAL_LOAD has 500 observations and 30 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1196.12k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        761  Switch Count  7
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+165        
+166        
+167        
+168        proc freq data=viral_load;
+169            tables test_day*treatment / missing;
+170        
+171            title "Diagnostic: Viral Load Records by Visit and Treatment";
+172        run;
+
+NOTE: There were 500 observations read from the data set WORK.VIRAL_LOAD.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              1508.31k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        762  Switch Count  5
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        37
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           552
+      
+
+173        
+174        title;
+175        
+176        proc means data=viral_load
+177                   n nmiss mean std stderr min max
+178                   maxdec=4;
+179        
+180            class test_day treatment;
+                                                           The SAS System
+
+181            var aval;
+182        
+183            title "Diagnostic: Viral Load Summary";
+184        run;
+
+NOTE: There were 500 observations read from the data set WORK.VIRAL_LOAD.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              7597.00k
+      OS Memory           33464.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        763  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     1499
+      Page Swaps                        0
+      Voluntary Context Switches        33
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+185        
+186        title;
+187        
+188        
+189        proc means data=viral_load
+190                   nway
+191                   noprint;
+192        
+193            class visit_order
+194                  test_day
+195                  trtn
+196                  treatment;
+197        
+198            var aval;
+199        
+200            output out=viral_summary_raw(drop=_type_ _freq_)
+201                n      = n
+202                mean   = mean
+203                stderr = se;
+204        run;
+
+NOTE: There were 500 observations read from the data set WORK.VIRAL_LOAD.
+NOTE: The data set WORK.VIRAL_SUMMARY_RAW has 10 observations and 7 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              7611.81k
+      OS Memory           33212.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        764  Switch Count  3
+      Page Faults                       0
+      Page Reclaims                     1461
+      Page Swaps                        0
+      Voluntary Context Switches        34
+                                                           The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+205        
+206        
+207        
+208        data visit_shell;
+209            length test_day $20;
+210        
+211            visit_order=1;
+212            test_day="Week 1";
+213            output;
+214        
+215            visit_order=2;
+216            test_day="Week 4";
+217            output;
+218        
+219            visit_order=3;
+220            test_day="Week 8";
+221            output;
+222        
+223            visit_order=4;
+224            test_day="Week 12";
+225            output;
+226        
+227            visit_order=5;
+228            test_day="Week 16";
+229            output;
+230        run;
+
+NOTE: The data set WORK.VISIT_SHELL has 5 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              527.59k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        765  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+231        
+232        
+233        data treatment_shell;
+234            length treatment $20;
+235        
+236            trtn=1;
+237            treatment="Active A";
+238            output;
+                                                           The SAS System
+
+239        
+240            trtn=2;
+241            treatment="Active B";
+242            output;
+243        run;
+
+NOTE: The data set WORK.TREATMENT_SHELL has 2 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.84k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        766  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+244        
+245        
+246        proc sql;
+247            create table report_shell as
+248        
+249            select v.visit_order,
+250                   v.test_day,
+251                   t.trtn,
+252                   t.treatment
+253        
+254            from visit_shell as v
+255                 cross join treatment_shell as t
+256        
+257            order by v.visit_order,
+258                     t.trtn;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.REPORT_SHELL created, with 10 rows and 4 columns.
+
+259        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              6772.25k
+      OS Memory           33196.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        767  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     257
+      Page Swaps                        0
+      Voluntary Context Switches        24
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+                                                           The SAS System
+
+      
+
+260        
+261        
+262        
+263        proc sql;
+264            create table viral_report_raw as
+265        
+266            select s.visit_order,
+267                   s.test_day,
+268                   s.trtn,
+269                   s.treatment,
+270        
+271                   a.n,
+272                   a.mean,
+273                   a.se
+274        
+275            from report_shell as s
+276        
+277            left join viral_summary_raw as a
+278        
+279              on  s.visit_order=a.visit_order
+280              and s.trtn=a.trtn
+281        
+282            order by s.visit_order,
+283                     s.trtn;
+NOTE: Table WORK.VIRAL_REPORT_RAW created, with 10 rows and 7 columns.
+
+284        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              5803.15k
+      OS Memory           33196.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        768  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     192
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+285        
+286        
+287        
+288        data viral_report;
+289            set viral_report_raw;
+290        
+291            length n_display      $10
+292                   result_display $40
+293                   day_display    $20;
+294        
+295            if not missing(n) then
+296                n_display=strip(put(n,3.));
+                                                           The SAS System
+
+297            else
+298                n_display="0";
+299        
+300        
+301            if not missing(mean) then
+302                result_display=cats(
+303                    strip(put(mean,8.3)),
+304                    " (",
+305                    strip(put(se,8.3)),
+306                    ")"
+307                );
+308            else
+309                result_display="NE";
+310        
+311        
+312            by visit_order trtn;
+313        
+314            if first.visit_order then
+315                day_display=test_day;
+316            else
+317                day_display="";
+318        run;
+
+NOTE: There were 10 observations read from the data set WORK.VIRAL_REPORT_RAW.
+NOTE: The data set WORK.VIRAL_REPORT has 10 observations and 10 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              909.78k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        769  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+319        
+320        
+321        
+322        proc print data=viral_report noobs;
+323            var visit_order
+324                day_display
+325                treatment
+326                n_display
+327                result_display;
+328        
+329            title "Diagnostic: Final Table 11 Dataset";
+330        run;
+
+NOTE: There were 10 observations read from the data set WORK.VIRAL_REPORT.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.01 seconds
+                                                           The SAS System
+
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              606.81k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        770  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     54
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+331        
+332        title;
+333        
+334        
+335        
+336        ods listing close;
+337        
+338        ods rtf
+339            file="&OUTPATH./Output_7.rtf"
+340            style=journal
+341            bodytitle;
+NOTE: Writing RTF Body file: /home/u64124548/sasuser.v94/TLF - Creation/Output/Output_7.rtf
+342        
+343        
+344        title1 j=c height=10pt
+345            "Table 11:";
+346        
+347        title2 j=c height=10pt
+348            "Summary of Viral Load over time";
+349        
+350        title3 j=c height=10pt
+351            "ITT Population";
+352        
+353        
+354        footnote1 j=l height=8pt
+355            "Calculated using PROC MEANS.";
+356        
+357        
+358        proc report
+359            data=viral_report
+360            nowd
+361            missing
+362            split="|"
+363        
+364            style(report)=[
+365                frame=hsides
+366                rules=groups
+367                cellpadding=2
+368                cellspacing=0
+369                width=6.8in
+370                font_face="Times New Roman"
+371                font_size=9pt
+372            ]
+                                                           The SAS System
+
+373        
+374            style(header)=[
+375                font_face="Times New Roman"
+376                font_size=9pt
+377                font_weight=normal
+378                just=center
+                   ____
+                   79
+                   76
+ERROR 79-322: Expecting a (.
+ERROR 76-322: Syntax error, statement will be ignored.
+379                borderbottomwidth=1
+380            ]
+381        
+382            style(column)=[
+383                font_face="Times New Roman"
+384                font_size=9pt
+385            ];
+386        
+387        
+388            columns visit_order
+389                    day_display
+390                    trtn
+391                    treatment
+392                    n_display
+393                    result_display;
+394        
+395        
+396            define visit_order /
+397                order
+398                noprint;
+399        
+400        
+401            define day_display /
+402                display
+403                "Test Day"
+404                style(column)=[
+405                    cellwidth=1.45in
+406                    just=left
+407                    asis=on
+408                ];
+409        
+410        
+411            define trtn /
+412                order
+413                noprint;
+414        
+415        
+416            define treatment /
+417                display
+418                "Treatment"
+419                style(column)=[
+420                    cellwidth=1.50in
+421                    just=left
+422                ];
+423        
+424        
+425            define n_display /
+                                                           The SAS System
+
+426                display
+427                "N"
+428                style(column)=[
+429                    cellwidth=.85in
+430                    just=center
+431                ];
+432        
+433        
+434            define result_display /
+435                display
+436                "Unadjusted Mean (SE)"
+437                style(column)=[
+438                    cellwidth=2.20in
+439                    just=center
+440                ];
+441        
+442        
+443            compute after visit_order;
+444                line " ";
+445            endcomp;
+446        
+447        run;
+
+NOTE: There were 10 observations read from the data set WORK.VIRAL_REPORT.
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.01 seconds
+      memory              7627.18k
+      OS Memory           33976.00k
+      Timestamp           07/17/2026 11:26:26 PM
+      Step Count                        771  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     1618
+      Page Swaps                        0
+      Voluntary Context Switches        22
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           24
+      
+
+448        
+449        
+450        ods rtf close;
+451        ods listing;
+452        
+453        
+454        title;
+455        footnote;
+456        
+457        proc printto;
+458        run;
+

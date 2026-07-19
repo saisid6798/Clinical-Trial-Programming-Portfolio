@@ -1,0 +1,2475 @@
+NOTE: PROCEDURE PRINTTO used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              284.75k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        583  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     16
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+85         
+86         libname xtte xport "&INPATH./ADTTE.xpt";
+NOTE: Libref XTTE was successfully assigned as follows: 
+      Engine:        XPORT 
+      Physical Name: /home/u64124548/sasuser.v94/TLF - Creation/Input/ADTTE.xpt
+87         
+88         proc copy in=xtte out=work memtype=data;
+89         run;
+
+NOTE: Input library XTTE is sequential.
+NOTE: Copying XTTE.ADTTE to WORK.ADTTE (memtype=DATA).
+NOTE: BUFSIZE is not cloned when copying across different engines. System Option for BUFSIZE was used.
+NOTE: There were 193 observations read from the data set XTTE.ADTTE.
+NOTE: The data set WORK.ADTTE has 193 observations and 48 variables.
+NOTE: PROCEDURE COPY used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1016.62k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        584  Switch Count  2
+                                                           The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     85
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+90         
+91         libname xtte clear;
+NOTE: Libref XTTE has been deassigned.
+92         
+93         
+94         data pfs;
+95             set work.adtte;
+96         
+97             where upcase(strip(ittfl))="Y"
+98               and upcase(strip(paramcd))="TTPFS";
+99         
+100            if upcase(strip(trt01a))="PLACEBO" then trtn=1;
+101            else if upcase(strip(trt01a))="CMP-135" then trtn=2;
+102            else delete;
+103        
+104        
+105            if cnsr < 0.5 then event=1;
+106            else event=0;
+107        
+108            if index(upcase(evntdesc),"DISEASE PROGRESSION") > 0 then
+109                event_type=1;
+110        
+111            else if index(upcase(evntdesc),"DEATH") > 0 then
+112                event_type=2;
+113        
+114            else event_type=0;
+115        run;
+
+NOTE: There were 65 observations read from the data set WORK.ADTTE.
+      WHERE (UPCASE(STRIP(ittfl))='Y') and (UPCASE(STRIP(paramcd))='TTPFS');
+NOTE: The data set WORK.PFS has 65 observations and 51 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1128.37k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        585  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     109
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+116        
+                                                           The SAS System
+
+117        
+118        proc freq data=pfs;
+119            tables remissn*trt01a
+120                   remissn*event
+121                   / missing;
+122        run;
+
+NOTE: There were 65 observations read from the data set WORK.PFS.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.00 seconds
+      memory              1821.00k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        586  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+123        
+124        
+125        data pfs_analysis;
+126            set pfs;
+127        
+128            groupn=remissn;
+129            output;
+130        
+131            groupn=3;
+132            output;
+133        run;
+
+NOTE: There were 65 observations read from the data set WORK.PFS.
+NOTE: The data set WORK.PFS_ANALYSIS has 130 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              954.25k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        587  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     97
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+134        
+135        
+                                                           The SAS System
+
+136        proc sql;
+137            create table count_summary as
+138            select groupn,
+139                   trtn,
+140        
+141                   count(distinct usubjid) as nsub,
+142        
+143                   count(distinct
+144                         case when event=1
+145                              then usubjid
+146                         end) as nevent,
+147        
+148                   count(distinct
+149                         case when event_type=1
+150                              then usubjid
+151                         end) as nprogression,
+152        
+153                   count(distinct
+154                         case when event_type=2
+155                              then usubjid
+156                         end) as ndeath,
+157        
+158                   count(distinct
+159                         case when event=0
+160                              then usubjid
+161                         end) as ncensored
+162        
+163            from pfs_analysis
+164        
+165            group by groupn,
+166                     trtn
+167        
+168            order by groupn,
+169                     trtn;
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: A CASE expression has no ELSE clause. Cases not accounted for by the WHEN clauses will result in a missing value for the CASE 
+      expression.
+NOTE: Table WORK.COUNT_SUMMARY created, with 6 rows and 7 columns.
+
+170        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              9836.21k
+      OS Memory           35084.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        588  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     223
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      0
+                                                           The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+171        
+172        
+173        data count_rows;
+174            set count_summary;
+175        
+176            length row_label $100
+177                   value     $40;
+178        
+179            row_order=1;
+180            row_label="No. of Subjects";
+181            value=strip(put(nsub,4.));
+182            output;
+183        
+184            row_order=2;
+185            row_label="   No. of Subjects with an event (%)";
+186        
+187            value=cats(
+188                strip(put(nevent,3.)),
+189                " (",
+190                strip(put(100*nevent/nsub,5.1)),
+191                "%)"
+192            );
+193            output;
+194        
+195            row_order=3;
+196            row_label="      Earliest contributing event:";
+197            value="";
+198            output;
+199        
+200            row_order=4;
+201            row_label="         Disease progression";
+202            value=strip(put(nprogression,3.));
+203            output;
+204        
+205            row_order=5;
+206            row_label="         Death";
+207            value=strip(put(ndeath,3.));
+208            output;
+209        
+210            row_order=6;
+211            row_label="   No. of Subjects without an event (%)";
+212        
+213            value=cats(
+214                strip(put(ncensored,3.)),
+215                " (",
+216                strip(put(100*ncensored/nsub,5.1)),
+217                "%)"
+218            );
+219            output;
+220        
+221            keep groupn trtn row_order row_label value;
+222        run;
+
+NOTE: There were 6 observations read from the data set WORK.COUNT_SUMMARY.
+                                                           The SAS System
+
+NOTE: The data set WORK.COUNT_ROWS has 36 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              845.96k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        589  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+223        
+224        
+225        %macro km_summary(group=, outprefix=);
+226        
+227            data km_input;
+228                set pfs_analysis;
+229                where groupn=&group;
+230            run;
+231        
+232            proc sort data=km_input;
+233                by trtn;
+234            run;
+235        
+236        
+237            ods exclude all;
+238        
+239            ods output Quartiles=&outprefix._quartiles;
+240        
+241            proc lifetest data=km_input
+242                          method=km
+243                          alpha=0.05
+244                          notable;
+245        
+246                time aval*event(0);
+247                strata trtn;
+248            run;
+249        
+250            ods exclude none;
+251        
+252        
+253            proc sort data=km_input
+254                      out=&outprefix._minmax_source;
+255        
+256                by trtn aval;
+257            run;
+258        
+259            data &outprefix._minmax;
+260                set &outprefix._minmax_source;
+261        
+262                by trtn aval;
+                                                           The SAS System
+
+263        
+264                retain minimum
+265                       maximum
+266                       min_event
+267                       max_event;
+268        
+269                if first.trtn then do;
+270                    minimum=aval;
+271                    maximum=aval;
+272                    min_event=event;
+273                    max_event=event;
+274                end;
+275        
+276                maximum=aval;
+277                max_event=event;
+278        
+279                if last.trtn then do;
+280        
+281                    length minimum_text $20
+282                           maximum_text $20
+283                           value        $50;
+284        
+285                    minimum_text=strip(put(minimum,5.1));
+286                    maximum_text=strip(put(maximum,5.1));
+287        
+288                    if min_event=0 then
+289                        minimum_text=cats(minimum_text,"+");
+290        
+291                    if max_event=0 then
+292                        maximum_text=cats(maximum_text,"+");
+293        
+294                    value=cats(
+295                        minimum_text,
+296                        " - ",
+297                        maximum_text
+298                    );
+299        
+300                    groupn=&group;
+301                    row_order=12;
+302                    row_label="   Minimum–maximum";
+303        
+304                    output;
+305                end;
+306        
+307                keep groupn trtn row_order row_label value;
+308            run;
+309        
+310        
+311            data &outprefix._quartiles_clean;
+312                set &outprefix._quartiles;
+313        
+314                length value     $50
+315                       row_label $100;
+316        
+317                trtn=input(compress(vvaluex("STRATUM"),,"KD"),best.);
+318        
+319                percentile=input(vvaluex("PERCENT"),best.);
+320                estimate  =input(vvaluex("ESTIMATE"),best.);
+                                                           The SAS System
+
+321                lower_ci  =input(vvaluex("LOWERLIMIT"),best.);
+322                upper_ci  =input(vvaluex("UPPERLIMIT"),best.);
+323        
+324                groupn=&group;
+325        
+326        
+327                if percentile=50 then do;
+328        
+329                    row_order=8;
+330                    row_label="   Median";
+331        
+332                    if missing(estimate) then value="NE";
+333                    else value=strip(put(estimate,5.1));
+334        
+335                    output;
+336        
+337        
+338                    row_order=9;
+339                    row_label="      (95% CI)";
+340        
+341                    value=cats(
+342                        "(",
+343                        ifc(
+344                            missing(lower_ci),
+345                            "NE",
+346                            strip(put(lower_ci,5.1))
+347                        ),
+348                        ", ",
+349                        ifc(
+350                            missing(upper_ci),
+351                            "NE",
+352                            strip(put(upper_ci,5.1))
+353                        ),
+354                        ")"
+355                    );
+356        
+357                    output;
+358                end;
+359        
+360                keep groupn
+361                     trtn
+362                     percentile
+363                     estimate
+364                     row_order
+365                     row_label
+366                     value;
+367            run;
+368        
+369        
+370        
+371            proc sql;
+372                create table &outprefix._percentiles as
+373                select &group as groupn,
+374        
+375                       input(
+376                           compress(vvaluex("STRATUM"),,"KD"),
+377                           best.
+378                       ) as trtn,
+                                                           The SAS System
+
+379        
+380                       max(
+381                           case
+382                               when input(vvaluex("PERCENT"),best.)=25
+383                               then input(vvaluex("ESTIMATE"),best.)
+384                           end
+385                       ) as q25,
+386        
+387                       max(
+388                           case
+389                               when input(vvaluex("PERCENT"),best.)=75
+390                               then input(vvaluex("ESTIMATE"),best.)
+391                           end
+392                       ) as q75
+393        
+394                from &outprefix._quartiles
+395        
+396                group by calculated trtn;
+397            quit;
+398        
+399            data &outprefix._percentile_row;
+400                set &outprefix._percentiles;
+401        
+402                length row_label $100
+403                       value     $50;
+404        
+405                row_order=11;
+406                row_label="   25th–75th percentile";
+407        
+408                value=cats(
+409                    ifc(
+410                        missing(q25),
+411                        "NE",
+412                        strip(put(q25,5.1))
+413                    ),
+414                    " - ",
+415                    ifc(
+416                        missing(q75),
+417                        "NE",
+418                        strip(put(q75,5.1))
+419                    )
+420                );
+421        
+422                keep groupn trtn row_order row_label value;
+423            run;
+424        
+425        %mend km_summary;
+426        
+427        
+428        %km_summary(group=1, outprefix=second);
+
+NOTE: There were 52 observations read from the data set WORK.PFS_ANALYSIS.
+      WHERE groupn=1;
+NOTE: The data set WORK.KM_INPUT has 52 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              959.09k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        590  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 52 observations read from the data set WORK.KM_INPUT.
+NOTE: The data set WORK.KM_INPUT has 52 observations and 52 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              873.12k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        591  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     103
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+WARNING: Output 'Quartiles' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, 
+         verify that the appropriate procedure options are used to produce the requested output object.  For example, verify that 
+         the NOPRINT option is not used.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              2148.00k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        592  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     100
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           464
+      
+
+
+NOTE: There were 52 observations read from the data set WORK.KM_INPUT.
+NOTE: The data set WORK.SECOND_MINMAX_SOURCE has 52 observations and 52 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+                                                           The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1137.81k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        593  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     137
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 52 observations read from the data set WORK.SECOND_MINMAX_SOURCE.
+NOTE: The data set WORK.SECOND_MINMAX has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              988.75k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        594  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+ERROR: File WORK.SECOND_QUARTILES.DATA does not exist.
+
+NOTE: The SAS System stopped processing this step because of errors.
+WARNING: The data set WORK.SECOND_QUARTILES_CLEAN may be incomplete.  When this step was stopped there were 0 observations and 7 
+         variables.
+WARNING: Data set WORK.SECOND_QUARTILES_CLEAN was not replaced because this step was stopped.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              503.00k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        595  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+                                                           The SAS System
+
+
+ERROR: File WORK.SECOND_QUARTILES.DATA does not exist.
+NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statements.
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              162.28k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        596  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     14
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+ERROR: File WORK.SECOND_PERCENTILES.DATA does not exist.
+
+WARNING: The variable GROUPN in the DROP, KEEP, or RENAME list has never been referenced.
+WARNING: The variable TRTN in the DROP, KEEP, or RENAME list has never been referenced.
+NOTE: The SAS System stopped processing this step because of errors.
+WARNING: The data set WORK.SECOND_PERCENTILE_ROW may be incomplete.  When this step was stopped there were 0 observations and 3 
+         variables.
+WARNING: Data set WORK.SECOND_PERCENTILE_ROW was not replaced because this step was stopped.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              496.96k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        597  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+429        %km_summary(group=2, outprefix=third);
+
+NOTE: There were 13 observations read from the data set WORK.PFS_ANALYSIS.
+      WHERE groupn=2;
+NOTE: The data set WORK.KM_INPUT has 13 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              959.09k
+      OS Memory           28332.00k
+                                                           The SAS System
+
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        598  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 13 observations read from the data set WORK.KM_INPUT.
+NOTE: The data set WORK.KM_INPUT has 13 observations and 52 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              873.12k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        599  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     110
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+WARNING: Output 'Quartiles' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, 
+         verify that the appropriate procedure options are used to produce the requested output object.  For example, verify that 
+         the NOPRINT option is not used.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              2130.21k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        600  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 13 observations read from the data set WORK.KM_INPUT.
+NOTE: The data set WORK.THIRD_MINMAX_SOURCE has 13 observations and 52 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+                                                           The SAS System
+
+      system cpu time     0.00 seconds
+      memory              1137.81k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        601  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     144
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 13 observations read from the data set WORK.THIRD_MINMAX_SOURCE.
+NOTE: The data set WORK.THIRD_MINMAX has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              988.75k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        602  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+ERROR: File WORK.THIRD_QUARTILES.DATA does not exist.
+
+NOTE: The SAS System stopped processing this step because of errors.
+WARNING: The data set WORK.THIRD_QUARTILES_CLEAN may be incomplete.  When this step was stopped there were 0 observations and 7 
+         variables.
+WARNING: Data set WORK.THIRD_QUARTILES_CLEAN was not replaced because this step was stopped.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              503.00k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        603  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+ERROR: File WORK.THIRD_QUARTILES.DATA does not exist.
+                                                           The SAS System
+
+NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statements.
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              162.28k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        604  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     14
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+ERROR: File WORK.THIRD_PERCENTILES.DATA does not exist.
+
+WARNING: The variable GROUPN in the DROP, KEEP, or RENAME list has never been referenced.
+WARNING: The variable TRTN in the DROP, KEEP, or RENAME list has never been referenced.
+NOTE: The SAS System stopped processing this step because of errors.
+WARNING: The data set WORK.THIRD_PERCENTILE_ROW may be incomplete.  When this step was stopped there were 0 observations and 3 
+         variables.
+WARNING: Data set WORK.THIRD_PERCENTILE_ROW was not replaced because this step was stopped.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              496.96k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        605  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           16
+      
+
+430        %km_summary(group=3, outprefix=overall);
+
+NOTE: There were 65 observations read from the data set WORK.PFS_ANALYSIS.
+      WHERE groupn=3;
+NOTE: The data set WORK.KM_INPUT has 65 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              959.09k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        606  Switch Count  2
+                                                           The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     109
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 65 observations read from the data set WORK.KM_INPUT.
+NOTE: The data set WORK.KM_INPUT has 65 observations and 52 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              873.12k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        607  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     101
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+WARNING: Output 'Quartiles' was not created.  Make sure that the output object name, label, or path is spelled correctly.  Also, 
+         verify that the appropriate procedure options are used to produce the requested output object.  For example, verify that 
+         the NOPRINT option is not used.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              2189.65k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        608  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     96
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 65 observations read from the data set WORK.KM_INPUT.
+NOTE: The data set WORK.OVERALL_MINMAX_SOURCE has 65 observations and 52 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1137.81k
+                                                           The SAS System
+
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        609  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     135
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 65 observations read from the data set WORK.OVERALL_MINMAX_SOURCE.
+NOTE: The data set WORK.OVERALL_MINMAX has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              988.75k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        610  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+ERROR: File WORK.OVERALL_QUARTILES.DATA does not exist.
+
+NOTE: The SAS System stopped processing this step because of errors.
+WARNING: The data set WORK.OVERALL_QUARTILES_CLEAN may be incomplete.  When this step was stopped there were 0 observations and 7 
+         variables.
+WARNING: Data set WORK.OVERALL_QUARTILES_CLEAN was not replaced because this step was stopped.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              503.00k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        611  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+ERROR: File WORK.OVERALL_QUARTILES.DATA does not exist.
+NOTE: PROC SQL set option NOEXEC and will continue to check the syntax of statements.
+NOTE: The SAS System stopped processing this step because of errors.
+                                                           The SAS System
+
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              162.28k
+      OS Memory           27812.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        612  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     14
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+
+ERROR: File WORK.OVERALL_PERCENTILES.DATA does not exist.
+
+WARNING: The variable GROUPN in the DROP, KEEP, or RENAME list has never been referenced.
+WARNING: The variable TRTN in the DROP, KEEP, or RENAME list has never been referenced.
+NOTE: The SAS System stopped processing this step because of errors.
+WARNING: The data set WORK.OVERALL_PERCENTILE_ROW may be incomplete.  When this step was stopped there were 0 observations and 3 
+         variables.
+WARNING: Data set WORK.OVERALL_PERCENTILE_ROW was not replaced because this step was stopped.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              496.96k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        613  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+431        
+432        
+433        
+434        data pfs_descriptive_rows;
+435            set count_rows
+436        
+437                second_quartiles_clean
+438                second_percentile_row
+439                second_minmax
+440        
+441                third_quartiles_clean
+442                third_percentile_row
+443                third_minmax
+444        
+445                overall_quartiles_clean
+                                                           The SAS System
+
+446                overall_percentile_row
+447                overall_minmax;
+448        run;
+
+WARNING: Multiple lengths were specified for the variable VALUE by input data set(s). This can cause truncation of data.
+NOTE: There were 36 observations read from the data set WORK.COUNT_ROWS.
+NOTE: There were 0 observations read from the data set WORK.SECOND_QUARTILES_CLEAN.
+NOTE: There were 0 observations read from the data set WORK.SECOND_PERCENTILE_ROW.
+NOTE: There were 2 observations read from the data set WORK.SECOND_MINMAX.
+NOTE: There were 0 observations read from the data set WORK.THIRD_QUARTILES_CLEAN.
+NOTE: There were 0 observations read from the data set WORK.THIRD_PERCENTILE_ROW.
+NOTE: There were 2 observations read from the data set WORK.THIRD_MINMAX.
+NOTE: There were 0 observations read from the data set WORK.OVERALL_QUARTILES_CLEAN.
+NOTE: There were 0 observations read from the data set WORK.OVERALL_PERCENTILE_ROW.
+NOTE: There were 2 observations read from the data set WORK.OVERALL_MINMAX.
+NOTE: The data set WORK.PFS_DESCRIPTIVE_ROWS has 42 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3765.37k
+      OS Memory           30672.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        614  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     433
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+449        
+450        
+451        data pfs_heading;
+452            length row_label $100
+453                   value     $50;
+454        
+455            do groupn=1 to 3;
+456                do trtn=1 to 2;
+457        
+458                    row_order=7;
+459                    row_label="Progression-Free survival (month)";
+460                    value="";
+461        
+462                    output;
+463                end;
+464            end;
+465        run;
+
+NOTE: The data set WORK.PFS_HEADING has 6 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.90k
+      OS Memory           28072.00k
+                                                           The SAS System
+
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        615  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+466        
+467        data pfs_descriptive_rows;
+468            set pfs_descriptive_rows
+469                pfs_heading;
+470        run;
+
+WARNING: Multiple lengths were specified for the variable VALUE by input data set(s). This can cause truncation of data.
+NOTE: There were 42 observations read from the data set WORK.PFS_DESCRIPTIVE_ROWS.
+NOTE: There were 6 observations read from the data set WORK.PFS_HEADING.
+NOTE: The data set WORK.PFS_DESCRIPTIVE_ROWS has 48 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1147.25k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        616  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     153
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+471        
+472        
+473        %macro unstratified(group=, outprefix=);
+474        
+475            data model_input;
+476                set pfs_analysis;
+477                where groupn=&group;
+478            run;
+479        
+480        
+481            ods exclude all;
+482        
+483            ods output HazardRatios=&outprefix._hr;
+484        
+485            proc phreg data=model_input;
+486        
+487                class trtn(ref="1") / param=ref;
+488        
+489                model aval*event(0)=trtn
+490                    / risklimits;
+                                                           The SAS System
+
+491        
+492                hazardratio trtn / diff=ref;
+493            run;
+494        
+495            ods exclude none;
+496        
+497        
+498            data &outprefix._hr_rows;
+499                set &outprefix._hr;
+500        
+501                length row_label $100
+502                       value     $50;
+503        
+504                groupn=&group;
+505        
+506                trtn=2;
+507        
+508                hazard_ratio=input(vvaluex("HAZARDRATIO"),best.);
+509                lower_ci    =input(vvaluex("HRLOWERCL"),best.);
+510                upper_ci    =input(vvaluex("HRUPPERCL"),best.);
+511        
+512        
+513                row_order=14;
+514                row_label="   Hazard ratio (relative to placebo)";
+515                value=strip(put(hazard_ratio,6.3));
+516                output;
+517        
+518        
+519                row_order=15;
+520                row_label="      (95% CI)";
+521        
+522                value=cats(
+523                    "(",
+524                    strip(put(lower_ci,6.3)),
+525                    ", ",
+526                    strip(put(upper_ci,6.3)),
+527                    ")"
+528                );
+529        
+530                output;
+531        
+532                keep groupn trtn row_order row_label value;
+533            run;
+534        
+535        
+536            ods exclude all;
+537        
+538            ods output HomTests=&outprefix._tests;
+539        
+540            proc lifetest data=model_input
+541                          notable;
+542        
+543                time aval*event(0);
+544        
+545                strata trtn /
+546                    test=(
+547                        logrank
+548                        wilcoxon
+                                                           The SAS System
+
+549                    );
+550            run;
+551        
+552            ods exclude none;
+553        
+554        
+555            data &outprefix._test_rows;
+556                set &outprefix._tests;
+557        
+558                length row_label $100
+559                       value     $50
+560                       test_name $100;
+561        
+562                groupn=&group;
+563                trtn=2;
+564        
+565                test_name=upcase(vvaluex("TEST"));
+566        
+567                pvalue=input(vvaluex("PROBCHISQ"),best.);
+568        
+569                if missing(pvalue) then
+570                    pvalue=input(vvaluex("PVALUE"),best.);
+571        
+572        
+573                if index(test_name,"LOG") > 0 then do;
+574        
+575                    row_order=17;
+576                    row_label="      Log-rank";
+577                    value=strip(put(pvalue,7.4));
+578                    output;
+579        
+580                end;
+581        
+582        
+583                else if index(test_name,"WIL") > 0 then do;
+584        
+585                    row_order=18;
+586                    row_label="      Wilcoxon";
+587                    value=strip(put(pvalue,7.4));
+588                    output;
+589        
+590                end;
+591        
+592                keep groupn trtn row_order row_label value;
+593            run;
+594        
+595        %mend unstratified;
+596        
+597        
+598        %unstratified(group=1, outprefix=second_un);
+
+NOTE: There were 52 observations read from the data set WORK.PFS_ANALYSIS.
+      WHERE groupn=1;
+NOTE: The data set WORK.MODEL_INPUT has 52 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              958.53k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        617  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.SECOND_UN_HR has 1 observations and 4 variables.
+NOTE: PROCEDURE PHREG used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              3067.98k
+      OS Memory           29892.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        618  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     371
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+
+NOTE: Argument to function VVALUEX is not a known variable name:  HRLOWERCL.
+NOTE: Invalid argument to function VVALUEX at line 598 column 121.
+NOTE: Argument to function VVALUEX is not a known variable name:  HRUPPERCL.
+NOTE: Invalid argument to function VVALUEX at line 598 column 177.
+DESCRIPTION=TRTN 2 vs 1 HAZARDRATIO=0.657 WALDLOWER=0.299 WALDUPPER=1.443 ROW_LABEL=(95% CI) VALUE=(,) GROUPN=1 TRTN=2
+HAZARD_RATIO=0.657 LOWER_CI= UPPER_CI= ROW_ORDER=15 _ERROR_=1 _N_=1
+NOTE: There were 1 observations read from the data set WORK.SECOND_UN_HR.
+NOTE: The data set WORK.SECOND_UN_HR_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              925.59k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        619  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+                                                           The SAS System
+
+      
+
+
+NOTE: The data set WORK.SECOND_UN_TESTS has 2 observations and 4 variables.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2541.84k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        620  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     185
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+
+NOTE: There were 2 observations read from the data set WORK.SECOND_UN_TESTS.
+NOTE: The data set WORK.SECOND_UN_TEST_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              893.84k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        621  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+599        %unstratified(group=2, outprefix=third_un);
+
+NOTE: There were 13 observations read from the data set WORK.PFS_ANALYSIS.
+      WHERE groupn=2;
+NOTE: The data set WORK.MODEL_INPUT has 13 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              958.40k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        622  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        11
+                                                           The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.THIRD_UN_HR has 1 observations and 4 variables.
+NOTE: PROCEDURE PHREG used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3060.34k
+      OS Memory           29892.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        623  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     371
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+
+NOTE: Argument to function VVALUEX is not a known variable name:  HRLOWERCL.
+NOTE: Invalid argument to function VVALUEX at line 599 column 121.
+NOTE: Argument to function VVALUEX is not a known variable name:  HRUPPERCL.
+NOTE: Invalid argument to function VVALUEX at line 599 column 177.
+DESCRIPTION=TRTN 2 vs 1 HAZARDRATIO=1.177 WALDLOWER=0.232 WALDUPPER=5.956 ROW_LABEL=(95% CI) VALUE=(,) GROUPN=2 TRTN=2
+HAZARD_RATIO=1.177 LOWER_CI= UPPER_CI= ROW_ORDER=15 _ERROR_=1 _N_=1
+NOTE: There were 1 observations read from the data set WORK.THIRD_UN_HR.
+NOTE: The data set WORK.THIRD_UN_HR_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              925.59k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        624  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: The data set WORK.THIRD_UN_TESTS has 2 observations and 4 variables.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              2481.59k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        625  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     185
+      Page Swaps                        0
+      Voluntary Context Switches        15
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           536
+      
+
+
+NOTE: There were 2 observations read from the data set WORK.THIRD_UN_TESTS.
+NOTE: The data set WORK.THIRD_UN_TEST_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              893.84k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        626  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+600        %unstratified(group=3, outprefix=overall_un);
+
+NOTE: There were 65 observations read from the data set WORK.PFS_ANALYSIS.
+      WHERE groupn=3;
+NOTE: The data set WORK.MODEL_INPUT has 65 observations and 52 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              958.40k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        627  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     109
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+                                                           The SAS System
+
+NOTE: The data set WORK.OVERALL_UN_HR has 1 observations and 4 variables.
+NOTE: PROCEDURE PHREG used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              3063.00k
+      OS Memory           29892.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        628  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     371
+      Page Swaps                        0
+      Voluntary Context Switches        15
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+
+NOTE: Argument to function VVALUEX is not a known variable name:  HRLOWERCL.
+NOTE: Invalid argument to function VVALUEX at line 600 column 121.
+NOTE: Argument to function VVALUEX is not a known variable name:  HRUPPERCL.
+NOTE: Invalid argument to function VVALUEX at line 600 column 177.
+DESCRIPTION=TRTN 2 vs 1 HAZARDRATIO=0.737 WALDLOWER=0.366 WALDUPPER=1.484 ROW_LABEL=(95% CI) VALUE=(,) GROUPN=3 TRTN=2
+HAZARD_RATIO=0.737 LOWER_CI= UPPER_CI= ROW_ORDER=15 _ERROR_=1 _N_=1
+NOTE: There were 1 observations read from the data set WORK.OVERALL_UN_HR.
+NOTE: The data set WORK.OVERALL_UN_HR_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              925.59k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        629  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: The data set WORK.OVERALL_UN_TESTS has 2 observations and 4 variables.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2536.06k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        630  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     185
+      Page Swaps                        0
+      Voluntary Context Switches        14
+                                                           The SAS System
+
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+
+NOTE: There were 2 observations read from the data set WORK.OVERALL_UN_TESTS.
+NOTE: The data set WORK.OVERALL_UN_TEST_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              893.84k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        631  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        13
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+601        
+602        
+603        data unstratified_headings;
+604            length row_label $100
+605                   value     $50;
+606        
+607            do groupn=1 to 3;
+608                do trtn=1 to 2;
+609        
+610                    row_order=13;
+611                    row_label="Unstratified analysis";
+612                    value="";
+613                    output;
+614        
+615                    row_order=16;
+616                    row_label="   p-value (relative to placebo)";
+617                    value="";
+618                    output;
+619        
+620                end;
+621            end;
+622        run;
+
+NOTE: The data set WORK.UNSTRATIFIED_HEADINGS has 12 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.90k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        632  Switch Count  2
+      Page Faults                       0
+                                                           The SAS System
+
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+623        
+624        
+625        data unstratified_rows;
+626            set second_un_hr_rows
+627                second_un_test_rows
+628        
+629                third_un_hr_rows
+630                third_un_test_rows
+631        
+632                overall_un_hr_rows
+633                overall_un_test_rows
+634        
+635                unstratified_headings;
+636        run;
+
+NOTE: There were 2 observations read from the data set WORK.SECOND_UN_HR_ROWS.
+NOTE: There were 2 observations read from the data set WORK.SECOND_UN_TEST_ROWS.
+NOTE: There were 2 observations read from the data set WORK.THIRD_UN_HR_ROWS.
+NOTE: There were 2 observations read from the data set WORK.THIRD_UN_TEST_ROWS.
+NOTE: There were 2 observations read from the data set WORK.OVERALL_UN_HR_ROWS.
+NOTE: There were 2 observations read from the data set WORK.OVERALL_UN_TEST_ROWS.
+NOTE: There were 12 observations read from the data set WORK.UNSTRATIFIED_HEADINGS.
+NOTE: The data set WORK.UNSTRATIFIED_ROWS has 24 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              2592.21k
+      OS Memory           29892.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        633  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     324
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+637        
+638        
+639        ods exclude all;
+640        
+641        ods output HazardRatios=stratified_hr;
+642        
+643        proc phreg data=pfs;
+644        
+645            class trtn(ref="1") / param=ref;
+646        
+                                                           The SAS System
+
+647            model aval*event(0)=trtn
+648                / risklimits;
+649        
+650            strata remissn;
+651        
+652            hazardratio trtn / diff=ref;
+653        run;
+
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The data set WORK.STRATIFIED_HR has 1 observations and 4 variables.
+NOTE: PROCEDURE PHREG used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              3071.81k
+      OS Memory           29892.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        634  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     371
+      Page Swaps                        0
+      Voluntary Context Switches        15
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           312
+      
+
+654        
+655        ods exclude none;
+656        
+657        
+658        data stratified_hr_rows;
+659            set stratified_hr;
+660        
+661            length row_label $100
+662                   value     $50;
+663        
+664            groupn=3;
+665            trtn=2;
+666        
+667            hazard_ratio=input(vvaluex("HAZARDRATIO"),best.);
+668            lower_ci    =input(vvaluex("HRLOWERCL"),best.);
+669            upper_ci    =input(vvaluex("HRUPPERCL"),best.);
+670        
+671        
+672            row_order=20;
+673            row_label="   Hazard ratio (relative to placebo)";
+674            value=strip(put(hazard_ratio,6.3));
+675            output;
+676        
+677        
+678            row_order=21;
+679            row_label="      (95% CI)";
+680        
+681            value=cats(
+682                "(",
+683                strip(put(lower_ci,6.3)),
+684                ", ",
+                                                           The SAS System
+
+685                strip(put(upper_ci,6.3)),
+686                ")"
+687            );
+688        
+689            output;
+690        
+691            keep groupn trtn row_order row_label value;
+692        run;
+
+NOTE: Argument to function VVALUEX is not a known variable name:  HRLOWERCL.
+NOTE: Invalid argument to function VVALUEX at line 668 column 24.
+NOTE: Argument to function VVALUEX is not a known variable name:  HRUPPERCL.
+NOTE: Invalid argument to function VVALUEX at line 669 column 24.
+DESCRIPTION=TRTN 2 vs 1 HAZARDRATIO=0.733 WALDLOWER=0.361 WALDUPPER=1.486 ROW_LABEL=(95% CI) VALUE=(,) GROUPN=3 TRTN=2
+HAZARD_RATIO=0.733 LOWER_CI= UPPER_CI= ROW_ORDER=21 _ERROR_=1 _N_=1
+NOTE: There were 1 observations read from the data set WORK.STRATIFIED_HR.
+NOTE: The data set WORK.STRATIFIED_HR_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              928.87k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        635  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+693        
+694        
+695        ods exclude all;
+696        
+697        ods output HomTests=stratified_tests;
+698        
+699        proc lifetest data=pfs
+700                      notable;
+701        
+702            time aval*event(0);
+703        
+704            strata trtn /
+705                group=remissn
+706                test=(
+707                    logrank
+708                    wilcoxon
+709                );
+710        run;
+
+NOTE: The data set WORK.STRATIFIED_TESTS has 2 observations and 4 variables.
+NOTE: PROCEDURE LIFETEST used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              1620.03k
+      OS Memory           28592.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        636  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     183
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+711        
+712        ods exclude none;
+713        
+714        
+715        data stratified_test_rows;
+716            set stratified_tests;
+717        
+718            length row_label $100
+719                   value     $50
+720                   test_name $100;
+721        
+722            groupn=3;
+723            trtn=2;
+724        
+725            test_name=upcase(vvaluex("TEST"));
+726        
+727            pvalue=input(vvaluex("PROBCHISQ"),best.);
+728        
+729            if missing(pvalue) then
+730                pvalue=input(vvaluex("PVALUE"),best.);
+731        
+732        
+733            if index(test_name,"LOG") > 0 then do;
+734        
+735                row_order=23;
+736                row_label="      Log-rank";
+737                value=strip(put(pvalue,7.4));
+738                output;
+739        
+740            end;
+741        
+742        
+743            else if index(test_name,"WIL") > 0 then do;
+744        
+745                row_order=24;
+746                row_label="      Wilcoxon";
+747                value=strip(put(pvalue,7.4));
+748                output;
+749        
+750            end;
+751        
+752            keep groupn trtn row_order row_label value;
+753        run;
+
+NOTE: There were 2 observations read from the data set WORK.STRATIFIED_TESTS.
+                                                           The SAS System
+
+NOTE: The data set WORK.STRATIFIED_TEST_ROWS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              891.81k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        637  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+754        
+755        
+756        data stratified_headings;
+757            length row_label $100
+758                   value     $50;
+759        
+760            groupn=3;
+761            trtn=2;
+762        
+763            row_order=19;
+764            row_label="Stratified analysis";
+765            value="";
+766            output;
+767        
+768            row_order=22;
+769            row_label="   p-value (relative to placebo)";
+770            value="";
+771            output;
+772        run;
+
+NOTE: The data set WORK.STRATIFIED_HEADINGS has 2 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              524.15k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        638  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+773        
+774        
+                                                           The SAS System
+
+775        data stratified_rows;
+776            set stratified_hr_rows
+777                stratified_test_rows
+778                stratified_headings;
+779        run;
+
+NOTE: There were 2 observations read from the data set WORK.STRATIFIED_HR_ROWS.
+NOTE: There were 2 observations read from the data set WORK.STRATIFIED_TEST_ROWS.
+NOTE: There were 2 observations read from the data set WORK.STRATIFIED_HEADINGS.
+NOTE: The data set WORK.STRATIFIED_ROWS has 6 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1414.87k
+      OS Memory           28852.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        639  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     189
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+780        
+781        
+782        data complete_long;
+783            set pfs_descriptive_rows
+784                unstratified_rows
+785                stratified_rows;
+786        run;
+
+WARNING: Multiple lengths were specified for the variable VALUE by input data set(s). This can cause truncation of data.
+NOTE: There were 48 observations read from the data set WORK.PFS_DESCRIPTIVE_ROWS.
+NOTE: There were 24 observations read from the data set WORK.UNSTRATIFIED_ROWS.
+NOTE: There were 6 observations read from the data set WORK.STRATIFIED_ROWS.
+NOTE: The data set WORK.COMPLETE_LONG has 78 observations and 7 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1494.96k
+      OS Memory           28852.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        640  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     186
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+787        
+                                                           The SAS System
+
+788        
+789        
+790        data complete_long;
+791            set complete_long;
+792        
+793            column_number=((groupn-1)*2)+trtn;
+794        run;
+
+NOTE: There were 78 observations read from the data set WORK.COMPLETE_LONG.
+NOTE: The data set WORK.COMPLETE_LONG has 78 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              803.28k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        641  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+795        
+796        proc sort data=complete_long;
+797            by row_order
+798               row_label
+799               column_number;
+800        run;
+
+NOTE: There were 78 observations read from the data set WORK.COMPLETE_LONG.
+NOTE: The data set WORK.COMPLETE_LONG has 78 observations and 8 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              776.53k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        642  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     110
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+801        
+802        
+803        proc transpose data=complete_long
+804                       out=complete_wide(drop=_name_)
+805                       prefix=col;
+                                                           The SAS System
+
+806        
+807            by row_order row_label;
+808        
+809            id column_number;
+810            var value;
+811        run;
+
+NOTE: There were 78 observations read from the data set WORK.COMPLETE_LONG.
+NOTE: The data set WORK.COMPLETE_WIDE has 20 observations and 8 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              2819.28k
+      OS Memory           30384.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        643  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     188
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+812        
+813        
+814        data final_table;
+815            set complete_wide;
+816        
+817            length col1-col6 $50;
+WARNING: Length of character variable COL1 has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+WARNING: Length of character variable COL2 has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+WARNING: Length of character variable COL3 has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+WARNING: Length of character variable COL4 has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+WARNING: Length of character variable COL5 has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+WARNING: Length of character variable COL6 has already been set. 
+         Use the LENGTH statement as the very first statement in the DATA STEP to declare the length of a character variable.
+818        
+819            if row_order in (3,7,13,16,19,22) then do;
+820        
+821                if row_order=3 then
+822                    row_label="   Earliest contributing event:";
+823        
+824                col1="";
+825                col2="";
+826                col3="";
+827                col4="";
+828                col5="";
+829                col6="";
+830            end;
+831        run;
+                                                           The SAS System
+
+
+NOTE: There were 20 observations read from the data set WORK.COMPLETE_WIDE.
+NOTE: The data set WORK.FINAL_TABLE has 20 observations and 8 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              805.28k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        644  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+832        
+833        
+834        proc sql noprint;
+835        
+836            select count(distinct usubjid)
+837            into :n_2_pl trimmed
+838            from pfs
+839            where remissn=1
+840              and trtn=1;
+841        
+842            select count(distinct usubjid)
+843            into :n_2_cmp trimmed
+844            from pfs
+845            where remissn=1
+846              and trtn=2;
+847        
+848            select count(distinct usubjid)
+849            into :n_3_pl trimmed
+850            from pfs
+851            where remissn=2
+852              and trtn=1;
+853        
+854            select count(distinct usubjid)
+855            into :n_3_cmp trimmed
+856            from pfs
+857            where remissn=2
+858              and trtn=2;
+859        
+860            select count(distinct usubjid)
+861            into :n_all_pl trimmed
+862            from pfs
+863            where trtn=1;
+864        
+865            select count(distinct usubjid)
+866            into :n_all_cmp trimmed
+867            from pfs
+868            where trtn=2;
+869        
+                                                           The SAS System
+
+870        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              5598.12k
+      OS Memory           33196.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        645  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     242
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           48
+      
+
+871        
+872        %put NOTE: 2nd remission Placebo N = &n_2_pl;
+NOTE: 2nd remission Placebo N = 26
+873        %put NOTE: 2nd remission CMP-135 N = &n_2_cmp;
+NOTE: 2nd remission CMP-135 N = 26
+874        %put NOTE: 3rd remission Placebo N = &n_3_pl;
+NOTE: 3rd remission Placebo N = 6
+875        %put NOTE: 3rd remission CMP-135 N = &n_3_cmp;
+NOTE: 3rd remission CMP-135 N = 7
+876        %put NOTE: Overall Placebo N = &n_all_pl;
+NOTE: Overall Placebo N = 32
+877        %put NOTE: Overall CMP-135 N = &n_all_cmp;
+NOTE: Overall CMP-135 N = 33
+878        
+879        
+880        proc print data=final_table noobs;
+881            var row_order
+882                row_label
+883                col1-col6;
+884        
+885            title "Diagnostic Dataset for Table 14.2/1";
+886        run;
+
+NOTE: There were 20 observations read from the data set WORK.FINAL_TABLE.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              793.37k
+      OS Memory           28072.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        646  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           16
+      
+                                                           The SAS System
+
+
+887        
+888        title;
+889        
+890        
+891        ods listing close;
+892        
+893        ods rtf file="&OUTPATH./Output_3.rtf"
+894                style=journal
+895                bodytitle;
+NOTE: Writing RTF Body file: /home/u64124548/sasuser.v94/TLF - Creation/Output/Output_3.rtf
+896        
+897        title1 j=c height=9pt
+898               "Table 14.2/1";
+899        
+900        title2 j=c height=9pt
+901               "Progression-Free Survival by Remission Status";
+902        
+903        title3 j=c height=9pt
+904               "Randomized Subjects";
+905        
+906        
+907        /* footnote1 j=l height=7pt */
+908        /*     "+ = censored value."; */
+909        /*  */
+910        /* footnote2 j=l height=7pt */
+911        /*     "Progression or death by any cause, whichever occurred first."; */
+912        /*  */
+913        /* footnote3 j=l height=7pt */
+914        /*     "Summaries of time-to-event variables were estimated using Kaplan-Meier curves."; */
+915        /*  */
+916        /* footnote4 j=l height=7pt */
+917        /*     "The 95% confidence interval for the median was calculated using the Brookmeyer and Crowley method."; */
+918        /*  */
+919        /* footnote5 j=l height=7pt */
+920        /*     "The hazard ratio was estimated using Cox regression."; */
+921        /*  */
+922        /* footnote6 j=l height=7pt */
+923        /*     "Study PRJ5457C     TLG Specifications, Version v1.0"; */
+924        
+925        
+926        proc report data=final_table
+927                    nowd
+928                    missing
+929                    split="|"
+930        
+931                    style(report)=[
+932                        frame=hsides
+933                        rules=groups
+934                        cellpadding=1
+935                        cellspacing=0
+936                        width=10.2in
+937                        font_face="Arial"
+938                        font_size=7.5pt
+939                    ]
+940        
+941                    style(header)=[
+942                        font_face="Arial"
+                                                           The SAS System
+
+943                        font_size=7.5pt
+944                        font_weight=normal
+945                        just=center
+                           ____
+                           79
+                           76
+ERROR 79-322: Expecting a (.
+ERROR 76-322: Syntax error, statement will be ignored.
+946                    ]
+947        
+948                    style(column)=[
+949                        font_face="Arial"
+950                        font_size=7.5pt
+951                    ];
+952        
+953            columns row_order
+954                    row_label
+955        
+956                    ("2^{super nd} remission"
+957                        col1
+958                        col2
+959                    )
+960        
+961                    ("3^{super rd} remission"
+962                        col3
+963                        col4
+964                    )
+965        
+966                    ("Overall"
+967                        col5
+968                        col6
+969                    );
+970        
+971        
+972            define row_order /
+973                order
+974                noprint;
+975        
+976        
+977            define row_label /
+978                display
+979                " "
+980                style(column)=[
+981                    cellwidth=3.1in
+982                    just=left
+983                    asis=on
+984                ];
+985        
+986        
+987            define col1 /
+988                display
+989                "Placebo|(n=&n_2_pl)"
+990                style(column)=[
+991                    cellwidth=1.15in
+992                    just=center
+993                ];
+994        
+995        
+                                                           The SAS System
+
+996            define col2 /
+997                display
+998                "CMP-135|(n=&n_2_cmp)"
+999                style(column)=[
+1000                   cellwidth=1.15in
+1001                   just=center
+1002               ];
+1003       
+1004       
+1005           define col3 /
+1006               display
+1007               "Placebo|(n=&n_3_pl)"
+1008               style(column)=[
+1009                   cellwidth=1.15in
+1010                   just=center
+1011               ];
+1012       
+1013       
+1014           define col4 /
+1015               display
+1016               "CMP-135|(n=&n_3_cmp)"
+1017               style(column)=[
+1018                   cellwidth=1.15in
+1019                   just=center
+1020               ];
+1021       
+1022       
+1023           define col5 /
+1024               display
+1025               "Placebo|(n=&n_all_pl)"
+1026               style(column)=[
+1027                   cellwidth=1.15in
+1028                   just=center
+1029               ];
+1030       
+1031       
+1032           define col6 /
+1033               display
+1034               "CMP-135|(n=&n_all_cmp)"
+1035               style(column)=[
+1036                   cellwidth=1.15in
+1037                   just=center
+1038               ];
+1039       
+1040           compute row_label;
+1041       
+1042               if row_order=19 then
+1043                   call define(
+1044                       _row_,
+1045                       "style",
+1046                       "style=[bordertopwidth=1]"
+1047                   );
+1048       
+1049           endcomp;
+1050       
+1051       
+1052           compute after;
+1053       
+                                                           The SAS System
+
+1054               line " ";
+1055       
+1056           endcomp;
+1057       
+1058       run;
+
+NOTE: There were 20 observations read from the data set WORK.FINAL_TABLE.
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.04 seconds
+      user cpu time       0.04 seconds
+      system cpu time     0.01 seconds
+      memory              7279.37k
+      OS Memory           33460.00k
+      Timestamp           07/17/2026 11:25:57 PM
+      Step Count                        647  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     971
+      Page Swaps                        0
+      Voluntary Context Switches        18
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           40
+      
+
+1059       
+1060       ods rtf close;
+1061       ods listing;
+1062       
+1063       title;
+1064       footnote;
+1065       
+1066       proc printto;
+1067       run;
+

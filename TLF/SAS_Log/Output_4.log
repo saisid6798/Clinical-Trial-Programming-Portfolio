@@ -1,0 +1,1519 @@
+NOTE: PROCEDURE PRINTTO used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              314.78k
+      OS Memory           27044.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        654  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     16
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+87         
+88         
+89         libname xlb xport "&INPATH./ADLBSI.xpt";
+NOTE: Libref XLB was successfully assigned as follows: 
+      Engine:        XPORT 
+      Physical Name: /home/u64124548/sasuser.v94/TLF - Creation/Input/ADLBSI.xpt
+90         
+91         proc copy
+92             in=xlb
+93             out=work
+94             memtype=data;
+95         run;
+
+NOTE: Input library XLB is sequential.
+NOTE: Copying XLB.ADLBSI to WORK.ADLBSI (memtype=DATA).
+NOTE: BUFSIZE is not cloned when copying across different engines. System Option for BUFSIZE was used.
+NOTE: There were 13759 observations read from the data set XLB.ADLBSI.
+NOTE: The data set WORK.ADLBSI has 13759 observations and 58 variables.
+NOTE: PROCEDURE COPY used (Total process time):
+      real time           0.03 seconds
+                                                           The SAS System
+
+      user cpu time       0.03 seconds
+      system cpu time     0.01 seconds
+      memory              2186.09k
+      OS Memory           28332.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        655  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     190
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           23568
+      
+
+96         
+97         libname xlb clear;
+NOTE: Libref XLB has been deassigned.
+98         
+99         
+100        proc contents data=work.adlbsi varnum;
+101        run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.06 seconds
+      user cpu time       0.06 seconds
+      system cpu time     0.00 seconds
+      memory              2843.81k
+      OS Memory           28588.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        656  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     283
+      Page Swaps                        0
+      Voluntary Context Switches        4
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           40
+      
+
+102        
+103        
+104        data lb_source;
+105            set work.adlbsi;
+106        
+107            where upcase(strip(saffl))="Y"
+108              and upcase(strip(anl01fl))="Y"
+109              and not missing(aval);
+110        
+111            length treatment $20;
+112        
+113            if upcase(strip(trt01a))="CMP-135" then do;
+114                trtn=1;
+115                treatment="CMP-135";
+116            end;
+117        
+118            else if upcase(strip(trt01a))="PLACEBO" then do;
+119                trtn=2;
+                                                           The SAS System
+
+120                treatment="Placebo";
+121            end;
+122        
+123            else delete;
+124        
+125        
+126            if upcase(strip(ontrtfl)) ne "Y" then delete;
+127        
+128            if not missing(adt) and
+129               not missing(trtsdt) and
+130               adt<trtsdt then delete;
+131        run;
+
+NOTE: There were 13366 observations read from the data set WORK.ADLBSI.
+      WHERE (UPCASE(STRIP(saffl))='Y') and (UPCASE(STRIP(anl01fl))='Y') and (not MISSING(aval));
+NOTE: The data set WORK.LB_SOURCE has 11287 observations and 60 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              3604.84k
+      OS Memory           30124.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        657  Switch Count  23
+      Page Faults                       0
+      Page Reclaims                     528
+      Page Swaps                        0
+      Voluntary Context Switches        62
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           19728
+      
+
+132        
+133        
+134        proc sql;
+135            select count(*) as LB_SOURCE_RECORDS
+136            from lb_source;
+137        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              6817.37k
+      OS Memory           33452.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        658  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     247
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+138        
+139        
+                                                           The SAS System
+
+140        
+141        proc sql;
+142            create table parameter_list as
+143        
+144            select distinct
+145                   upcase(strip(paramcd)) as paramcd length=12,
+146                   strip(param) as lab_parameter length=120
+147        
+148            from lb_source
+149        
+150            where not missing(paramcd)
+151        
+152            order by calculated lab_parameter;
+NOTE: Table WORK.PARAMETER_LIST created, with 34 rows and 2 columns.
+
+153        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              9561.89k
+      OS Memory           34576.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        659  Switch Count  7
+      Page Faults                       0
+      Page Reclaims                     1469
+      Page Swaps                        0
+      Voluntary Context Switches        40
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           2832
+      
+
+154        
+155        
+156        data parameter_list;
+157            set parameter_list;
+158            parameter_order=_n_;
+159        run;
+
+NOTE: There were 34 observations read from the data set WORK.PARAMETER_LIST.
+NOTE: The data set WORK.PARAMETER_LIST has 34 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              796.81k
+      OS Memory           27820.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        660  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+                                                           The SAS System
+
+
+160        
+161        
+162        data toxicity_direction_raw;
+163            set work.adlbsi;
+164        
+165            length event $1;
+166        
+167            if upcase(strip(btoxdir)) in ("L","H") then do;
+168                event=upcase(strip(btoxdir));
+169                output;
+170            end;
+171        
+172            if upcase(strip(atoxdir)) in ("L","H") then do;
+173                event=upcase(strip(atoxdir));
+174                output;
+175            end;
+176        
+177            keep paramcd event;
+178        run;
+
+NOTE: There were 13759 observations read from the data set WORK.ADLBSI.
+NOTE: The data set WORK.TOXICITY_DIRECTION_RAW has 2187 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              2237.71k
+      OS Memory           28588.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        661  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     309
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+179        
+180        
+181        proc sort data=toxicity_direction_raw
+182                  out=toxicity_directions
+183                  nodupkey;
+184        
+185            by paramcd event;
+186        run;
+
+NOTE: There were 2187 observations read from the data set WORK.TOXICITY_DIRECTION_RAW.
+NOTE: 2163 observations with duplicate key values were deleted.
+NOTE: The data set WORK.TOXICITY_DIRECTIONS has 24 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1064.90k
+      OS Memory           28080.00k
+                                                           The SAS System
+
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        662  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+187        
+188        
+189        proc sql;
+190            create table event_control as
+191        
+192            select p.parameter_order,
+193                   p.paramcd,
+194                   p.lab_parameter,
+195                   d.event,
+196        
+197                   case
+198                       when d.event="L" then 1
+199                       when d.event="H" then 2
+200                       else 9
+201                   end as event_order
+202        
+203            from parameter_list as p
+204        
+205            inner join toxicity_directions as d
+206        
+207              on upcase(strip(p.paramcd))=
+208                 upcase(strip(d.paramcd))
+209        
+210            where d.event in ("L","H")
+211        
+212            order by p.parameter_order,
+213                     calculated event_order;
+NOTE: Table WORK.EVENT_CONTROL created, with 23 rows and 5 columns.
+
+214        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              10618.76k
+      OS Memory           35856.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        663  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     259
+      Page Swaps                        0
+      Voluntary Context Switches        22
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+                                                           The SAS System
+
+215        
+216        
+217        proc print data=event_control noobs;
+218            title "Diagnostic: Parameters and Toxicity Directions";
+219        run;
+
+NOTE: There were 23 observations read from the data set WORK.EVENT_CONTROL.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              687.37k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        664  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     54
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+220        
+221        title;
+222        
+223        
+224        proc sql;
+225            create table lb_directional as
+226        
+227            select a.*,
+228                   c.parameter_order,
+229                   c.lab_parameter,
+230                   c.event,
+231                   c.event_order
+232        
+233            from lb_source as a
+234        
+235            inner join event_control as c
+236        
+237              on upcase(strip(a.paramcd))=
+238                 upcase(strip(c.paramcd))
+239        
+240            order by a.trtn,
+241                     a.usubjid,
+242                     c.parameter_order,
+243                     c.event_order,
+244                     a.adt;
+NOTE: Table WORK.LB_DIRECTIONAL created, with 9911 rows and 64 columns.
+
+245        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              24174.25k
+      OS Memory           48692.00k
+                                                           The SAS System
+
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        665  Switch Count  3
+      Page Faults                       0
+      Page Reclaims                     1054
+      Page Swaps                        0
+      Voluntary Context Switches        285
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           20232
+      
+
+246        
+247        
+248        
+249        data lb_grades;
+250            set lb_directional;
+251        
+252            length baseline_direction
+253                   analysis_direction $1;
+254        
+255            baseline_direction=upcase(strip(btoxdir));
+256            analysis_direction=upcase(strip(atoxdir));
+257        
+258        
+259            baseline_grade_value=input(strip(vvalue(btoxgr)),best.);
+260            analysis_grade_value=input(strip(vvalue(atoxgr)),best.);
+261        
+262        
+263            anrhi_numeric=input(strip(vvalue(anrhi)),best.);
+264        
+265        
+266            if baseline_direction=event and
+267               not missing(baseline_grade_value) then
+268        
+269                baseline_grade=baseline_grade_value;
+270        
+271            else baseline_grade=0;
+272        
+273        
+274        
+275            if analysis_direction=event and
+276               not missing(analysis_grade_value) then
+277        
+278                post_grade=analysis_grade_value;
+279        
+280        
+281        
+282            else if event="H" and
+283                    not missing(anrhi_numeric) and
+284                    aval>anrhi_numeric then
+285        
+286                post_grade=9;
+287        
+288        
+289            else post_grade=0;
+290        
+291        
+292            if baseline_grade not in (0,1,2,3,4) then
+                                                           The SAS System
+
+293                baseline_grade=0;
+294        
+295            if post_grade not in (0,1,2,3,4,9) then
+296                post_grade=0;
+297        
+298        
+299        
+300            if post_grade=9 then severity_rank=0.5;
+301            else severity_rank=post_grade;
+302        run;
+
+NOTE: There were 9911 observations read from the data set WORK.LB_DIRECTIONAL.
+NOTE: The data set WORK.LB_GRADES has 9911 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              3764.46k
+      OS Memory           30124.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        666  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     493
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           21008
+      
+
+303        
+304        
+305        proc sort data=lb_grades
+306                  out=lb_worst_sort;
+307        
+308            by trtn
+309               usubjid
+310               parameter_order
+311               event_order
+312               descending severity_rank
+313               descending adt;
+314        run;
+
+NOTE: There were 9911 observations read from the data set WORK.LB_GRADES.
+NOTE: The data set WORK.LB_WORST_SORT has 9911 observations and 72 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.02 seconds
+      memory              15022.93k
+      OS Memory           41192.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        667  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     3169
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+                                                           The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           21008
+      
+
+315        
+316        
+317        data lb_worst;
+318            set lb_worst_sort;
+319        
+320            by trtn
+321               usubjid
+322               parameter_order
+323               event_order
+324               descending severity_rank
+325               descending adt;
+326        
+327            if first.event_order;
+328        run;
+
+NOTE: There were 9911 observations read from the data set WORK.LB_WORST_SORT.
+NOTE: The data set WORK.LB_WORST has 1423 observations and 72 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              3634.78k
+      OS Memory           30124.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        668  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     493
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           3080
+      
+
+329        
+330        
+331        proc sort data=lb_worst nodupkey;
+332        
+333            by trtn
+334               usubjid
+335               parameter_order
+336               event_order;
+337        run;
+
+NOTE: There were 1423 observations read from the data set WORK.LB_WORST.
+NOTE: 0 observations with duplicate key values were deleted.
+NOTE: The data set WORK.LB_WORST has 1423 observations and 72 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              4363.40k
+      OS Memory           30652.00k
+      Timestamp           07/17/2026 11:26:02 PM
+                                                           The SAS System
+
+      Step Count                        669  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     715
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           3080
+      
+
+338        
+339        
+340        data lb_worst_report;
+341            set lb_worst;
+342        
+343            length baseline_label $10;
+344        
+345            if event="H" and baseline_grade in (1,2,3,4) then do;
+346                baseline_group=14;
+347                baseline_label="1-4";
+348                baseline_order=1;
+349            end;
+350        
+351            else do;
+352                baseline_group=baseline_grade;
+353                baseline_label=strip(put(baseline_grade,1.));
+354        
+355                baseline_order=5-baseline_grade;
+356            end;
+357        run;
+
+NOTE: There were 1423 observations read from the data set WORK.LB_WORST.
+NOTE: The data set WORK.LB_WORST_REPORT has 1423 observations and 75 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              3594.18k
+      OS Memory           30124.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        670  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     493
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           3336
+      
+
+358        
+359        
+360        proc sql;
+361            create table lb_denominator as
+362        
+363            select trtn,
+364                   treatment,
+365                   parameter_order,
+                                                           The SAS System
+
+366                   event_order,
+367                   paramcd,
+368                   lab_parameter,
+369                   event,
+370                   baseline_group,
+371                   baseline_label,
+372                   baseline_order,
+373        
+374                   count(distinct usubjid) as denominator
+375        
+376            from lb_worst_report
+377        
+378            group by trtn,
+379                     treatment,
+380                     parameter_order,
+381                     event_order,
+382                     paramcd,
+383                     lab_parameter,
+384                     event,
+385                     baseline_group,
+386                     baseline_label,
+387                     baseline_order
+388        
+389            order by trtn,
+390                     parameter_order,
+391                     event_order,
+392                     baseline_order;
+NOTE: Table WORK.LB_DENOMINATOR created, with 94 rows and 11 columns.
+
+393        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              6907.25k
+      OS Memory           33452.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        671  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     448
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+394        
+395        
+396        proc sql;
+397            create table lb_counts as
+398        
+399            select trtn,
+400                   parameter_order,
+401                   event_order,
+402                   baseline_group,
+403                   post_grade,
+404        
+                                                           The SAS System
+
+405                   count(distinct usubjid) as count
+406        
+407            from lb_worst_report
+408        
+409            group by trtn,
+410                     parameter_order,
+411                     event_order,
+412                     baseline_group,
+413                     post_grade;
+NOTE: Table WORK.LB_COUNTS created, with 183 rows and 6 columns.
+
+414        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              6856.25k
+      OS Memory           33452.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        672  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     391
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           296
+      
+
+415        
+416        
+417        
+418        data post_grade_shell;
+419        
+420            post_grade=0;
+421            output;
+422        
+423            post_grade=1;
+424            output;
+425        
+426            post_grade=2;
+427            output;
+428        
+429            post_grade=3;
+430            output;
+431        
+432            post_grade=4;
+433            output;
+434        
+435            post_grade=9;
+436            output;
+437        run;
+
+NOTE: The data set WORK.POST_GRADE_SHELL has 6 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+                                                           The SAS System
+
+      memory              523.28k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        673  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+438        
+439        
+440        proc sql;
+441            create table lb_shell as
+442        
+443            select d.*,
+444                   s.post_grade
+445        
+446            from lb_denominator as d
+447        
+448            cross join post_grade_shell as s
+449        
+450            order by d.trtn,
+451                     d.parameter_order,
+452                     d.event_order,
+453                     d.baseline_order,
+454                     s.post_grade;
+NOTE: The execution of this query involves performing one or more Cartesian product joins that can not be optimized.
+NOTE: Table WORK.LB_SHELL created, with 564 rows and 12 columns.
+
+455        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              9029.79k
+      OS Memory           34576.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        674  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     270
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+456        
+457        
+458        proc sql;
+459            create table lb_complete as
+460        
+461            select s.*,
+462                   coalesce(c.count,0) as count
+                                                           The SAS System
+
+463        
+464            from lb_shell as s
+465        
+466            left join lb_counts as c
+467        
+468              on  s.trtn=c.trtn
+469              and s.parameter_order=c.parameter_order
+470              and s.event_order=c.event_order
+471              and s.baseline_group=c.baseline_group
+472              and s.post_grade=c.post_grade
+473        
+474            order by s.trtn,
+475                     s.parameter_order,
+476                     s.event_order,
+477                     s.baseline_order,
+478                     s.post_grade;
+NOTE: Table WORK.LB_COMPLETE created, with 564 rows and 13 columns.
+
+479        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              10566.10k
+      OS Memory           35788.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        675  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     302
+      Page Swaps                        0
+      Voluntary Context Switches        22
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           288
+      
+
+480        
+481        
+482        data lb_formatted;
+483            set lb_complete;
+484        
+485            length value $30;
+486        
+487            if denominator>0 then
+488                value=cats(
+489                    strip(put(count,3.)),
+490                    " (",
+491                    strip(put(100*count/denominator,5.1)),
+492                    "%)"
+493                );
+494        
+495            else value="0 (0.0%)";
+496        run;
+
+NOTE: There were 564 observations read from the data set WORK.LB_COMPLETE.
+NOTE: The data set WORK.LB_FORMATTED has 564 observations and 14 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+                                                           The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              929.84k
+      OS Memory           28076.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        676  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+497        
+498        
+499        proc sort data=lb_formatted;
+500        
+501            by trtn
+502               treatment
+503               parameter_order
+504               event_order
+505               paramcd
+506               lab_parameter
+507               event
+508               baseline_order
+509               baseline_group
+510               baseline_label
+511               denominator
+512               post_grade;
+513        run;
+
+NOTE: There were 564 observations read from the data set WORK.LB_FORMATTED.
+NOTE: The data set WORK.LB_FORMATTED has 564 observations and 14 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1495.15k
+      OS Memory           28596.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        677  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+514        
+515        
+516        proc transpose
+517            data=lb_formatted
+518            out=lb_wide(drop=_name_)
+519            prefix=g;
+                                                           The SAS System
+
+520        
+521            by trtn
+522               treatment
+523               parameter_order
+524               event_order
+525               paramcd
+526               lab_parameter
+527               event
+528               baseline_order
+529               baseline_group
+530               baseline_label
+531               denominator;
+532        
+533            id post_grade;
+534            var value;
+535        run;
+
+NOTE: There were 564 observations read from the data set WORK.LB_FORMATTED.
+NOTE: The data set WORK.LB_WIDE has 94 observations and 17 variables.
+NOTE: PROCEDURE TRANSPOSE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2996.43k
+      OS Memory           30128.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        678  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     171
+      Page Swaps                        0
+      Voluntary Context Switches        20
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           536
+      
+
+536        
+537        
+538        proc sort data=lb_wide;
+539        
+540            by trtn
+541               parameter_order
+542               event_order
+543               baseline_order;
+544        run;
+
+NOTE: There were 94 observations read from the data set WORK.LB_WIDE.
+NOTE: The data set WORK.LB_WIDE has 94 observations and 17 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              785.87k
+      OS Memory           28076.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        679  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     104
+                                                           The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+545        
+546        
+547        data final_lab;
+548            set lb_wide;
+549        
+550            by trtn
+551               parameter_order
+552               event_order
+553               baseline_order;
+554        
+555            length display_parameter $120
+556                   display_event     $20
+557                   display_baseline  $10;
+558        
+559        
+560            if first.parameter_order then
+561                display_parameter=lab_parameter;
+562        
+563            else display_parameter="";
+564        
+565        
+566            if first.event_order then do;
+567        
+568                if event="L" then
+569                    display_event="Low";
+570        
+571                else if event="H" then
+572                    display_event="High";
+573        
+574            end;
+575        
+576            else display_event="";
+577        
+578        
+579            display_baseline=baseline_label;
+580        
+581        
+582            if missing(g0) then g0="0 (0.0%)";
+583            if missing(g1) then g1="0 (0.0%)";
+584            if missing(g2) then g2="0 (0.0%)";
+585            if missing(g3) then g3="0 (0.0%)";
+586            if missing(g4) then g4="0 (0.0%)";
+587            if missing(g9) then g9="0 (0.0%)";
+588        run;
+
+NOTE: There were 94 observations read from the data set WORK.LB_WIDE.
+NOTE: The data set WORK.FINAL_LAB has 94 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+                                                           The SAS System
+
+      memory              920.65k
+      OS Memory           28076.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        680  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     109
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+589        
+590        
+591        data final_cmp
+592             final_placebo;
+593        
+594            set final_lab;
+595        
+596            if trtn=1 then output final_cmp;
+597            else if trtn=2 then output final_placebo;
+598        run;
+
+NOTE: There were 94 observations read from the data set WORK.FINAL_LAB.
+NOTE: The data set WORK.FINAL_CMP has 45 observations and 20 variables.
+NOTE: The data set WORK.FINAL_PLACEBO has 49 observations and 20 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1169.09k
+      OS Memory           28336.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        681  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     173
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+599        
+600        
+601        proc sql;
+602        
+603            select count(*) as FINAL_CMP_RECORDS
+604            from final_cmp;
+605        
+606            select count(*) as FINAL_PLACEBO_RECORDS
+607            from final_placebo;
+608        
+609        quit;
+NOTE: PROCEDURE SQL used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+                                                           The SAS System
+
+      system cpu time     0.00 seconds
+      memory              5592.34k
+      OS Memory           32940.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        682  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     93
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+610        
+611        
+612        proc print data=final_lab(obs=100) noobs;
+613        
+614            var treatment
+615                display_parameter
+616                display_event
+617                display_baseline
+618                denominator
+619                g0
+620                g1
+621                g2
+622                g3
+623                g4
+624                g9;
+625        
+626            title "Diagnostic: Final Laboratory Shift Dataset";
+627        run;
+
+NOTE: There were 94 observations read from the data set WORK.FINAL_LAB.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.10 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              550.12k
+      OS Memory           27560.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        683  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           64
+      
+
+628        
+629        title;
+630        
+631        
+632        ods listing close;
+633        
+634        ods rtf
+                                                           The SAS System
+
+635            file="&OUTPATH./Output_4.rtf"
+636            style=journal
+637            bodytitle;
+NOTE: Writing RTF Body file: /home/u64124548/sasuser.v94/TLF - Creation/Output/Output_4.rtf
+638        
+639        
+640        title1 j=c height=9pt
+641            "Table 14.3/10";
+642        
+643        title2 j=c height=9pt
+644            "Change in Laboratory Events: Shift in NCI-CTC Grade from Baseline";
+645        
+646        title3 j=c height=9pt
+647            "to Worst Post-Baseline Level";
+648        
+649        title4 j=c height=9pt
+650            "Safety Evaluable Patients";
+651        
+652        
+653        
+654        %macro lab_report(data=, treatment=);
+655        
+656        
+657        ods rtf text=
+658        "^S={
+659            font_face='Arial'
+660            font_size=8pt
+661            font_weight=bold
+662            just=left
+663        }
+664        Treatment: &treatment";
+665        
+666        
+667        proc report
+668            data=&data
+669            nowd
+670            missing
+671            split="|"
+672        
+673            style(report)=[
+674                frame=hsides
+675                rules=groups
+676                cellpadding=1
+677                cellspacing=0
+678                font_face="Arial"
+679                font_size=7pt
+680            ]
+681        
+682            style(header)=[
+683                font_face="Arial"
+684                font_size=7pt
+685                font_weight=normal
+686            ]
+687        
+688            style(column)=[
+689                font_face="Arial"
+690                font_size=7pt
+691            ];
+                                                           The SAS System
+
+692        
+693        
+694            columns parameter_order
+695                    event_order
+696                    baseline_order
+697                    display_parameter
+698                    display_event
+699                    display_baseline
+700                    denominator
+701        
+702                    (
+703                        "Post-Baseline NCI CTCAE Grade"
+704        
+705                        g0
+706                        g1
+707                        g2
+708                        g3
+709                        g4
+710                        g9
+711                    );
+712        
+713        
+714            define parameter_order /
+715                order
+716                noprint;
+717        
+718        
+719            define event_order /
+720                order
+721                noprint;
+722        
+723        
+724            define baseline_order /
+725                order
+726                noprint;
+727        
+728        
+729            define display_parameter /
+730                display
+731                "Lab Parameter"
+732                style(column)=[
+733                    cellwidth=1.70in
+734                    just=l
+735                    asis=on
+736                ];
+737        
+738        
+739            define display_event /
+740                display
+741                "Lab Event"
+742                style(column)=[
+743                    cellwidth=.65in
+744                    just=c
+745                ];
+746        
+747        
+748            define display_baseline /
+749                display
+                                                           The SAS System
+
+750                "Baseline Grade"
+751                style(column)=[
+752                    cellwidth=.65in
+753                    just=c
+754                ];
+755        
+756        
+757            define denominator /
+758                display
+759                "N"
+760                style(column)=[
+761                    cellwidth=.40in
+762                    just=c
+763                ];
+764        
+765        
+766            define g0 /
+767                display
+768                "0"
+769                style(column)=[
+770                    cellwidth=.85in
+771                    just=c
+772                ];
+773        
+774        
+775            define g1 /
+776                display
+777                "1"
+778                style(column)=[
+779                    cellwidth=.85in
+780                    just=c
+781                ];
+782        
+783        
+784            define g2 /
+785                display
+786                "2"
+787                style(column)=[
+788                    cellwidth=.85in
+789                    just=c
+790                ];
+791        
+792        
+793            define g3 /
+794                display
+795                "3"
+796                style(column)=[
+797                    cellwidth=.85in
+798                    just=c
+799                ];
+800        
+801        
+802            define g4 /
+803                display
+804                "4"
+805                style(column)=[
+806                    cellwidth=.85in
+807                    just=c
+                                                           The SAS System
+
+808                ];
+809        
+810        
+811            define g9 /
+812                display
+813                "Other|(value > ULN)"
+814                style(column)=[
+815                    cellwidth=1.15in
+816                    just=c
+817                ];
+818        
+819        run;
+820        
+821        
+822        ods rtf text="^S={font_size=5pt} ";
+823        
+824        
+825        %mend lab_report;
+826        
+827        
+828        %lab_report(
+829            data=final_cmp,
+830            treatment=CMP-135
+831        );
+NOTE: Line generated by the invoked macro "LAB_REPORT".
+831                 cellpadding=1         cellspacing=0         font_face="Arial"         font_size=7pt     ]      style(header)=[
+831      !        font_face="Arial"         font_size=7pt         font_weight=normal     ]      style(column)=[
+                                                                                         _
+                                                                                         79
+831      ! font_face="Arial"
+ERROR 79-322: Expecting a (.
+
+NOTE: Line generated by the invoked macro "LAB_REPORT".
+831                 cellpadding=1         cellspacing=0         font_face="Arial"         font_size=7pt     ]      style(header)=[
+831      !        font_face="Arial"         font_size=7pt         font_weight=normal     ]      style(column)=[
+                                                                                         _
+                                                                                         76
+831      ! font_face="Arial"
+ERROR 76-322: Syntax error, statement will be ignored.
+
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.09 seconds
+      system cpu time     0.00 seconds
+      memory              7921.45k
+      OS Memory           33716.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        684  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     652
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           96
+      
+NOTE: There were 45 observations read from the data set WORK.FINAL_CMP.
+
+                                                           The SAS System
+
+832        
+833        
+834        %lab_report(
+835            data=final_placebo,
+836            treatment=Placebo
+837        );
+NOTE: Line generated by the invoked macro "LAB_REPORT".
+837                 cellpadding=1         cellspacing=0         font_face="Arial"         font_size=7pt     ]      style(header)=[
+837      !        font_face="Arial"         font_size=7pt         font_weight=normal     ]      style(column)=[
+                                                                                         _
+                                                                                         79
+837      ! font_face="Arial"
+ERROR 79-322: Expecting a (.
+
+NOTE: Line generated by the invoked macro "LAB_REPORT".
+837                 cellpadding=1         cellspacing=0         font_face="Arial"         font_size=7pt     ]      style(header)=[
+837      !        font_face="Arial"         font_size=7pt         font_weight=normal     ]      style(column)=[
+                                                                                         _
+                                                                                         76
+837      ! font_face="Arial"
+ERROR 76-322: Syntax error, statement will be ignored.
+
+NOTE: There were 49 observations read from the data set WORK.FINAL_PLACEBO.
+NOTE: PROCEDURE REPORT used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.09 seconds
+      system cpu time     0.00 seconds
+      memory              6931.23k
+      OS Memory           33972.00k
+      Timestamp           07/17/2026 11:26:02 PM
+      Step Count                        685  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     477
+      Page Swaps                        0
+      Voluntary Context Switches        23
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           104
+      
+
+838        
+839        
+840        /* ods rtf text= */
+841        /* "^S={ */
+842        /*     font_face='Arial' */
+843        /*     font_size=7pt */
+844        /*     just=left */
+845        /* } */
+846        /* N = Number of subjects with a baseline and at least one post-baseline value."; */
+847        /*  */
+848        /*  */
+849        /* ods rtf text= */
+850        /* "^S={ */
+851        /*     font_face='Arial' */
+852        /*     font_size=7pt */
+853        /*     just=left */
+854        /* } */
+855        /* Baseline is the last observation prior to the initiation of study medication."; */
+                                                           The SAS System
+
+856        /*  */
+857        /*  */
+858        /* ods rtf text= */
+859        /* "^S={ */
+860        /*     font_face='Arial' */
+861        /*     font_size=7pt */
+862        /*     just=left */
+863        /* } */
+864        /* All post-baseline laboratory values were used when determining the highest NCI CTCAE grade laboratory event, including
+864      !  repeats and unscheduled visits."; */
+865        /*  */
+866        /*  */
+867        /* ods rtf text= */
+868        /* "^S={ */
+869        /*     font_face='Arial' */
+870        /*     font_size=7pt */
+871        /*     just=left */
+872        /* } */
+873        /* Post-baseline population: Count only once for each patient at the highest NCI CTCAE Grade."; */
+874        /*  */
+875        /*  */
+876        /* ods rtf text= */
+877        /* "^S={ */
+878        /*     font_face='Arial' */
+879        /*     font_size=7pt */
+880        /*     just=left */
+881        /* } */
+882        /* Percentages are based on the number of subjects in the N column."; */
+883        
+884        
+885        
+886        ods rtf close;
+887        ods listing;
+888        
+889        title;
+890        footnote;
+891        
+892        proc printto;
+893        run;
+
